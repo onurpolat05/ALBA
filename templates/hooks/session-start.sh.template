@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Session Start Hook
+# Runs when Claude Code session starts
+# Purpose: Load context and show daily summary
+
+echo "=== Session Context ==="
+echo ""
+echo "Date: $(date +%Y-%m-%d)"
+echo ""
+
+# Read current focus
+if [ -f "memory/state/current_focus.md" ]; then
+  echo "--- Current Focus ---"
+  head -20 memory/state/current_focus.md
+  echo ""
+fi
+
+# Read active tasks
+if [ -f "memory/state/todo.md" ]; then
+  echo "--- Active Tasks ---"
+  grep -E "^- \[ \]" memory/state/todo.md | head -5
+  echo ""
+fi
+
+# Read today's log if exists
+TODAY=$(date +%Y-%m-%d)
+if [ -f "memory/daily/${TODAY}.md" ]; then
+  echo "--- Today's Log ---"
+  head -10 "memory/daily/${TODAY}.md"
+  echo ""
+fi
+
+echo "=== Ready ==="

@@ -1,0 +1,22 @@
+# Active Goals
+
+## This Week ([Date Range])
+
+### [Day] - [Status]
+- [ ] Task 1
+- [ ] Task 2
+- [ ] Task 3
+
+## Active Projects
+
+| Project | Context | Priority | Status |
+|---------|---------|----------|--------|
+| **Project Name** | `memory/projects/[project-name]/` | HIGH | Active/Waiting |
+
+## Blockers
+
+- (List any blockers here)
+
+---
+
+Last updated: [Date]
