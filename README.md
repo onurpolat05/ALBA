@@ -36,14 +36,14 @@ opAgent Starter is an open-source template for building personalized AI agent sy
 ### One-Line Install
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/[your-username]/opagent-starter/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/onurpolat05/opagent-starter/main/install.sh)
 ```
 
 ### Manual Install
 
 ```bash
 # Clone the repo
-git clone https://github.com/[your-username]/opagent-starter.git
+git clone https://github.com/onurpolat05/opagent-starter.git
 cd opagent-starter
 
 # Run installer
@@ -292,8 +292,8 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 💬 Community
 
-- **Issues:** [GitHub Issues](https://github.com/[your-username]/opagent-starter/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/[your-username]/opagent-starter/discussions)
+- **Issues:** [GitHub Issues](https://github.com/onurpolat05/opagent-starter/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/onurpolat05/opagent-starter/discussions)
 - **Examples:** Share your setup in the `examples/` directory
 
 ---
@@ -339,7 +339,7 @@ Yes! You can export your config and share templates.
 ## 🚀 Get Started
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/[your-username]/opagent-starter/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/onurpolat05/opagent-starter/main/install.sh)
 ```
 
 **Build your personalized AI agent in under 10 minutes.**
@@ -348,4 +348,4 @@ bash <(curl -fsSL https://raw.githubusercontent.com/[your-username]/opagent-star
 
 **Made with ❤️ by the opAgent community**
 
-[⭐ Star on GitHub](https://github.com/[your-username]/opagent-starter) • [📖 Documentation](https://github.com/[your-username]/opagent-starter/wiki) • [💬 Discussions](https://github.com/[your-username]/opagent-starter/discussions)
+[⭐ Star on GitHub](https://github.com/onurpolat05/opagent-starter) • [📖 Documentation](https://github.com/onurpolat05/opagent-starter/wiki) • [💬 Discussions](https://github.com/onurpolat05/opagent-starter/discussions)
