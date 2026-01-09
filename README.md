@@ -78,13 +78,11 @@ your-workspace/
 │   ├── knowledge/          # Learnings and preferences
 │   └── daily/              # Session logs
 ├── .claude/
-│   ├── commands/           # Custom commands
+│   ├── commands/           # Custom commands (/start, /end, etc.)
 │   ├── skills/             # Custom capabilities
 │   ├── hooks/              # Automation workflows
-│   ├── docs/               # Documentation
-│   └── settings.json       # Configuration
-├── CLAUDE.md               # Your agent's core instructions
-└── README.md               # Workspace guide
+│   └── docs/               # Documentation
+└── CLAUDE.md               # Your agent's core instructions
 ```
 
 ### Extensibility
@@ -138,6 +136,7 @@ Based on your answers, Claude creates:
 After setup:
 - `/start` - Begin daily session
 - `/end` - Save session summary
+- `/status` - Quick status check
 - `/extend` - Add new features
 
 ---
@@ -152,9 +151,9 @@ See the `examples/` directory for real-world setups:
 
 ```
 User: "I'm a software developer"
-→ What takes up your time? "Managing projects, client communication"
-→ Tools? "GitHub, Trello, Slack"
-→ Automate? "Task organization, PR tracking"
+→ What takes up your time? "Writing code, reviewing PRs, research"
+→ Tools? "GitHub, Notion, Slack"
+→ Automate? "Research workflow, task organization"
 → Tech level? "Advanced"
 
 Result:
@@ -302,4 +301,4 @@ Then run `/setup` and follow the prompts.
 
 **Made with care by the opAgent community**
 
-[Star on GitHub](https://github.com/onurpolat05/opagent-starter) | [Documentation](https://github.com/onurpolat05/opagent-starter/wiki) | [Discussions](https://github.com/onurpolat05/opagent-starter/discussions)
+[Star on GitHub](https://github.com/onurpolat05/opagent-starter) | [Discussions](https://github.com/onurpolat05/opagent-starter/discussions)
