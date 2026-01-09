@@ -6,7 +6,7 @@ An interactive setup system that creates a customized AI agent workspace tailore
 
 ---
 
-## ✨ What is opAgent?
+## What is opAgent?
 
 opAgent Starter is an open-source template for building personalized AI agent systems powered by Claude Code. Instead of a one-size-fits-all solution, it asks you questions about your work and builds a system specifically for you.
 
@@ -19,7 +19,7 @@ opAgent Starter is an open-source template for building personalized AI agent sy
 
 ---
 
-## 🎯 Perfect For
+## Perfect For
 
 | Role | What You Get |
 |------|--------------|
@@ -31,44 +31,34 @@ opAgent Starter is an open-source template for building personalized AI agent sy
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### One-Line Install
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/onurpolat05/opagent-starter/main/install.sh)
-```
-
-### Manual Install
+### 1. Clone the Repository
 
 ```bash
-# Clone the repo
-git clone https://github.com/onurpolat05/opagent-starter.git
-cd opagent-starter
-
-# Run installer
-./install.sh
-
-# Follow the prompts to set up your workspace
+git clone https://github.com/onurpolat05/opagent-starter.git my-agent
+cd my-agent
 ```
 
-### Next Steps
+### 2. Open Claude Code
 
-After installation:
-
-1. Navigate to your workspace
-2. Start Claude Code
-3. Tell Claude:
-```
-@.claude/setup/initial-setup.md başla ve benim için agent sistemini kur
+```bash
+claude
 ```
 
-4. Answer the questions
-5. Your personalized agent is ready!
+### 3. Run Setup
+
+```
+/setup
+```
+
+### 4. Answer Questions & Done!
+
+The setup asks about your role, tools, and preferences, then builds your personalized agent system.
 
 ---
 
-## 💡 Features
+## Features
 
 ### Core System
 
@@ -88,6 +78,7 @@ your-workspace/
 │   ├── knowledge/          # Learnings and preferences
 │   └── daily/              # Session logs
 ├── .claude/
+│   ├── commands/           # Custom commands
 │   ├── skills/             # Custom capabilities
 │   ├── hooks/              # Automation workflows
 │   ├── docs/               # Documentation
@@ -113,7 +104,7 @@ Add new features anytime:
 
 ---
 
-## 📖 How It Works
+## How It Works
 
 ### Phase 1: Discovery (5-7 questions)
 
@@ -151,47 +142,32 @@ After setup:
 
 ---
 
-## 🎓 Examples
+## Examples
 
-### Example 1: PM Setup
+See the `examples/` directory for real-world setups:
 
-```
-User: "I'm a project manager"
-→ What takes up your time? "Managing projects, client communication"
-→ Tools? "Trello, Gmail, Slack"
-→ Automate? "Email categorization, task tracking"
-→ Tech level? "Intermediate"
+- **software-engineer/** - Developer-focused setup with research skills and task management
 
-Result:
-✓ PM-focused CLAUDE.md
-✓ Trello integration
-✓ Email auto-categorization skill
-✓ Client communication templates
-✓ Daily standup command
-✓ Session hooks for context loading
-```
-
-### Example 2: Developer Setup
+### Example: Developer Setup
 
 ```
 User: "I'm a software developer"
-→ Daily work? "Writing code, reviewing PRs"
-→ Tools? "GitHub, VS Code"
-→ Automate? "PR tracking, code organization"
+→ What takes up your time? "Managing projects, client communication"
+→ Tools? "GitHub, Trello, Slack"
+→ Automate? "Task organization, PR tracking"
 → Tech level? "Advanced"
 
 Result:
 ✓ Developer-focused CLAUDE.md
-✓ GitHub integration
-✓ Code review workflows
-✓ Pre-commit hooks
-✓ TypeScript error checking
-✓ Development commands
+✓ GitHub integration guidance
+✓ Task automation skill
+✓ Research skill for technical docs
+✓ Session hooks for context loading
 ```
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Two-Phase System
 
@@ -217,7 +193,7 @@ Result:
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 | Document | Purpose |
 |----------|---------|
@@ -225,19 +201,18 @@ Result:
 | `setup/extend-system.md` | Adding features after setup |
 | `templates/` | All template files (memory, skills, hooks) |
 | `templates/INDEX.md` | Template reference and guide |
-| `docs/` | Additional documentation |
+| `examples/` | Real-world setup examples |
 
 ---
 
-## 🛠️ Requirements
+## Requirements
 
-- **Claude Code** (CLI) - [Install here](https://claude.md)
-- **Bash** (for install script)
-- **Optional:** Node.js (if using NPM install method)
+- **Claude Code** (CLI) - [Install here](https://docs.anthropic.com/en/docs/claude-code)
+- **Git** (for cloning)
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Here's how:
 
@@ -246,12 +221,6 @@ Contributions welcome! Here's how:
 - New skill templates → `templates/skills/`
 - New hook examples → `templates/hooks/`
 - New docs → `templates/claude/`
-
-### Improving Setup Flow
-
-- Enhance `setup/initial-setup.md`
-- Add use case examples
-- Improve question flow
 
 ### Sharing Use Cases
 
@@ -263,18 +232,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ---
 
-## 📋 Roadmap
+## Roadmap
 
-- [ ] NPM package for easier installation
+- [ ] More example setups (PM, Designer, Content Creator)
 - [ ] Web-based template gallery
-- [ ] Pre-built setups for common roles
 - [ ] Video tutorials
 - [ ] Community skill library
 - [ ] VS Code extension integration
 
 ---
 
-## 🌟 Inspiration
+## Inspiration
 
 This project was inspired by:
 - Personal productivity systems (GTD, PARA, Zettelkasten)
@@ -284,13 +252,13 @@ This project was inspired by:
 
 ---
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) for details
 
 ---
 
-## 💬 Community
+## Community
 
 - **Issues:** [GitHub Issues](https://github.com/onurpolat05/opagent-starter/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/onurpolat05/opagent-starter/discussions)
@@ -298,21 +266,7 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ---
 
-## 🙏 Acknowledgments
-
-- [Anthropic](https://anthropic.com) for Claude Code
-- All contributors and early adopters
-- Inspired by the personal agent movement
-
----
-
-## 📸 Screenshots
-
-_Coming soon: Setup flow, example workspaces, extension demos_
-
----
-
-## ❓ FAQ
+## FAQ
 
 ### Do I need technical knowledge?
 
@@ -320,32 +274,32 @@ No! The system adapts to your technical level. Beginners get simple setups with 
 
 ### Can I use this with my existing Claude Code setup?
 
-Yes! Just install to a new workspace directory.
+Yes! Clone to a new directory and run `/setup`.
 
 ### What if I want to change something after setup?
 
 Everything is customizable. Edit CLAUDE.md, memory files, or use `/extend` to add features.
 
-### Does this work on Windows?
-
-The bash install script is Unix-based, but you can manually set up on Windows.
-
 ### Can I share my setup with my team?
 
-Yes! You can export your config and share templates.
+Yes! You can share your config and templates.
 
 ---
 
-## 🚀 Get Started
+## Get Started
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/onurpolat05/opagent-starter/main/install.sh)
+git clone https://github.com/onurpolat05/opagent-starter.git my-agent
+cd my-agent
+claude
 ```
+
+Then run `/setup` and follow the prompts.
 
 **Build your personalized AI agent in under 10 minutes.**
 
 ---
 
-**Made with ❤️ by the opAgent community**
+**Made with care by the opAgent community**
 
-[⭐ Star on GitHub](https://github.com/onurpolat05/opagent-starter) • [📖 Documentation](https://github.com/onurpolat05/opagent-starter/wiki) • [💬 Discussions](https://github.com/onurpolat05/opagent-starter/discussions)
+[Star on GitHub](https://github.com/onurpolat05/opagent-starter) | [Documentation](https://github.com/onurpolat05/opagent-starter/wiki) | [Discussions](https://github.com/onurpolat05/opagent-starter/discussions)

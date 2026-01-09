@@ -147,9 +147,9 @@ user-workspace/
 ```
 
 **Files to customize:**
-- `CLAUDE.md` → Based on role, tools, preferences
-- `memory/knowledge/preferences.md` → From their answers
-- `.claude/settings.json` → Based on technical level
+- `CLAUDE.md` - Based on role, tools, preferences
+- `memory/knowledge/preferences.md` - From their answers
+- `.claude/settings.json` - Based on technical level
 
 #### Step 2: Initial Content Population
 
@@ -240,17 +240,17 @@ After structure is created:
 
 1. **Show summary:**
 ```
-"✅ Your agent system is ready! Here's what we set up:
+"Your agent system is ready! Here's what we set up:
 
-📁 Structure:
+Structure:
 - Memory system (tracks tasks, learnings, preferences)
 - [Features if any]
 
-📝 Initial data:
+Initial data:
 - [X] priorities in current_focus.md
 - [Y] tasks in todo.md
 
-🎯 Next steps:
+Next steps:
 1. Test it: type '/start'
 2. Try a task: [suggest based on their role]
 3. Extend anytime: type '/extend'
@@ -273,7 +273,7 @@ Ready to try?"
 
 ---
 
-## Example Flow
+## Example Flows
 
 **Developer Setup:**
 ```
@@ -351,10 +351,10 @@ User: "Standard"
 - If they want to skip something → mark as "can add later"
 
 ### Success Markers
-✅ User understands the structure
-✅ User has working CLAUDE.md
-✅ User can run /start successfully
-✅ User knows how to extend later (/extend)
+- User understands the structure
+- User has working CLAUDE.md
+- User can run /start successfully
+- User knows how to extend later (/extend)
 
 ---
 
@@ -367,7 +367,7 @@ Point user to:
 
 **Congratulate them:**
 ```
-"🎉 Your personal agent is ready! You can now:
+"Your personal agent is ready! You can now:
 - Use /start to begin sessions
 - Add new features with /extend anytime
 - Customize in memory/knowledge/preferences.md

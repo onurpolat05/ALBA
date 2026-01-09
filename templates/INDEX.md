@@ -1,98 +1,95 @@
 # Template Index
 
-Bu klasör, kişiselleştirilmiş agent sistemi kurmak için gereken template dosyalarını içerir.
+This folder contains template files for building your personalized agent system.
 
-## Template Kategorileri
+## Template Categories
 
-### 📁 Memory Templates
+### Memory Templates
 
-Hafıza sistemi için dosya template'leri:
+Templates for the memory system:
 
-| Dosya | Açıklama | Kullanım |
-|-------|----------|----------|
-| `todo.md.template` | Aktif görevler ve hedefler | Günlük/haftalık güncellenir |
-| `current_focus.md.template` | Mevcut öncelikler ve odak | Her session güncelenir |
-| `learnings.md.template` | Birikmiş bilgi ve öğrenimler | Claude otomatik günceller |
-| `preferences.md.template` | Kullanıcı tercihleri | İhtiyaç olduğunda güncellenir |
-| `daily-log.md.template` | Günlük session özeti | Claude otomatik oluşturur |
+| File | Description | Usage |
+|------|-------------|-------|
+| `todo.md.template` | Active tasks and goals | Updated daily/weekly |
+| `current_focus.md.template` | Current priorities and focus | Updated each session |
+| `learnings.md.template` | Accumulated knowledge and insights | Claude auto-updates |
+| `preferences.md.template` | User preferences | Updated as needed |
+| `daily-log.md.template` | Daily session summary | Claude auto-creates |
 
-**Kullanım:**
+**Usage:**
 ```bash
 cp templates/memory/todo.md.template memory/state/todo.md
-# Sonra kendi bilgilerinle doldur
+# Then fill in your own information
 ```
 
 ---
 
-### 🎯 Skills Templates
+### Skills Templates
 
-Özel yetenekler için template'ler:
+Templates for custom capabilities:
 
-| Dosya | Açıklama | Seviye |
-|-------|----------|---------|
-| `SKILL-TEMPLATE.md` | Genel skill template'i | Başlangıç |
-| `research-skill-example.md` | Web araştırma skill örneği | Orta |
-| `task-automation-example.md` | Task otomasyon skill örneği | Orta |
+| File | Description | Level |
+|------|-------------|-------|
+| `SKILL-TEMPLATE.md` | Generic skill template | Beginner |
+| `research-skill-example.md` | Web research skill example | Intermediate |
+| `task-automation-example.md` | Task automation skill example | Intermediate |
 
-**Kullanım:**
+**Usage:**
 ```bash
-# Yeni skill oluştur
+# Create a new skill
 mkdir -p .claude/skills/my-skill
 cp templates/skills/SKILL-TEMPLATE.md .claude/skills/my-skill/SKILL.md
-# SKILL.md'yi özelleştir
+# Customize SKILL.md
 ```
 
-**Örneklerden Öğren:**
-- `research-skill-example.md` → Exa + Firecrawl ile araştırma
-- `task-automation-example.md` → Trello/Notion otomasyon
+**Learn from examples:**
+- `research-skill-example.md` - Research with Exa + Firecrawl
+- `task-automation-example.md` - Trello/Notion automation
 
 ---
 
-### ⚙️ Hooks Templates
+### Hooks Templates
 
-Otomatik workflow'lar için hook scriptleri:
+Hook scripts for automated workflows:
 
-| Dosya | Açıklama | Gereksinim |
-|-------|----------|-----------|
-| `session-start.sh.template` | Session başlangıç hook'u | Temel |
-| `session-stop.sh.template` | Session bitiş hook'u | Temel |
-| `README-hooks.md` | Hook sistemi kılavuzu | Dokümantasyon |
+| File | Description | Requirement |
+|------|-------------|-------------|
+| `session-start.sh.template` | Session start hook | Basic |
+| `session-stop.sh.template` | Session stop hook | Basic |
+| `README-hooks.md` | Hooks system guide | Documentation |
 
-**Kullanım:**
+**Usage:**
 ```bash
-# Hook'ları kopyala
+# Copy hooks
 mkdir -p .claude/hooks
 cp templates/hooks/session-start.sh.template .claude/hooks/session-start.sh
 cp templates/hooks/session-stop.sh.template .claude/hooks/session-stop.sh
 
-# Executable yap
+# Make executable
 chmod +x .claude/hooks/*.sh
 
-# settings.json'a ekle (README-hooks.md'ye bak)
+# Add to settings.json (see README-hooks.md)
 ```
-
-**Öğrenme:**
-- `README-hooks.md` → Tam hook kılavuzu
 
 ---
 
-### 📝 Claude Templates
+### Claude Templates
 
-Ana sistem dosyaları:
+Core system files:
 
-| Dosya | Açıklama | Öncelik |
-|-------|----------|---------|
-| `CLAUDE.md.template` | Ana talimat dosyası | **Zorunlu** |
-| `memory-system.md.template` | Hafıza sistemi kılavuzu | Önerilen |
-| `decision-protocol.md.template` | Karar verme protokolü | Önerilen |
+| File | Description | Priority |
+|------|-------------|----------|
+| `CLAUDE.md.template` | Main instruction file | **Required** |
+| `memory-system.md.template` | Memory system guide | Recommended |
+| `decision-protocol.md.template` | Decision-making protocol | Recommended |
 
-**Kullanım:**
+**Usage:**
 ```bash
-# Ana dosyayı oluştur
+# Create main file
 cp templates/claude/CLAUDE.md.template CLAUDE.md
-# Kendi bilgilerinle özelleştir (isim, rol, tercihler)
+# Customize with your info (name, role, preferences)
 
-# Docs'ları oluştur
+# Create docs
 mkdir -p .claude/docs
 cp templates/claude/memory-system.md.template .claude/docs/memory-system.md
 cp templates/claude/decision-protocol.md.template .claude/docs/decision-protocol.md
@@ -100,14 +97,14 @@ cp templates/claude/decision-protocol.md.template .claude/docs/decision-protocol
 
 ---
 
-## Kullanım Senaryoları
+## Setup Scenarios
 
-### Minimal Setup (5 dakika)
+### Minimal Setup (5 minutes)
 
-Sadece temel dosyalar:
+Just the essentials:
 
 ```bash
-# 1. Ana talimat
+# 1. Main instruction
 cp templates/claude/CLAUDE.md.template CLAUDE.md
 
 # 2. Memory state
@@ -115,12 +112,12 @@ mkdir -p memory/state
 cp templates/memory/todo.md.template memory/state/todo.md
 cp templates/memory/current_focus.md.template memory/state/current_focus.md
 
-# 3. Özelleştir ve test et
+# 3. Customize and test
 ```
 
-### Standard Setup (15 dakika)
+### Standard Setup (15 minutes)
 
-Tam özellikli sistem:
+Full-featured system:
 
 ```bash
 # 1. Claude core
@@ -134,14 +131,14 @@ cp templates/memory/*.template memory/knowledge/
 cp templates/memory/todo.md.template memory/state/
 cp templates/memory/current_focus.md.template memory/state/
 
-# 3. Skill (opsiyonel)
+# 3. Skill (optional)
 mkdir -p .claude/skills/research
 cp templates/skills/research-skill-example.md .claude/skills/research/SKILL.md
 
-# 4. Özelleştir
+# 4. Customize
 ```
 
-### Advanced Setup (30 dakika)
+### Advanced Setup (30 minutes)
 
 Hooks + Skills + Full Integration:
 
@@ -154,84 +151,84 @@ cp templates/hooks/*.sh.template .claude/hooks/
 chmod +x .claude/hooks/*.sh
 
 # 2. Multiple skills
-# Her skill için template kopyala ve özelleştir
+# Copy and customize template for each skill
 
-# 3. settings.json konfigüre et
-# 4. MCP entegrasyonları
+# 3. Configure settings.json
+# 4. MCP integrations
 ```
 
 ---
 
-## Template Özelleştirme Rehberi
+## Template Customization Guide
 
-### 1. Placeholders (Değiştirilmesi Gerekenler)
+### 1. Placeholders
 
-Template'lerde şu placeholders var:
+Templates contain these placeholders:
 
-- `[User Name]` → Senin adın
-- `[Date]` → Bugünün tarihi
-- `[Role]` → Rolün (PM, Developer, Designer, etc.)
-- `[Tool 1]`, `[Tool 2]` → Kullandığın araçlar
-- `[Primary function]` → Ana işlevler
+- `[User Name]` - Your name
+- `[Date]` - Today's date
+- `[Role]` - Your role (PM, Developer, Designer, etc.)
+- `[Tool 1]`, `[Tool 2]` - Tools you use
+- `[Primary function]` - Main functions
 
-### 2. Silme/Ekleme
+### 2. Remove/Add
 
-Template'ler generic - gereksiz kısımları sil:
-- Kullanmadığın araçlar
-- İhtiyacın olmayan özellikler
-- İlgili olmayan bölümler
+Templates are generic - delete unnecessary parts:
+- Tools you don't use
+- Features you don't need
+- Irrelevant sections
 
-### 3. Kendi Bölümlerini Ekle
+### 3. Add Your Own Sections
 
-Template'lere özel bölümler ekleyebilirsin:
-- Özel workflow'lar
-- Domain-specific bilgi
-- Takım kuralları
-
----
-
-## Yardım & Destek
-
-### Template Seçimi
-
-**Rolüne göre:**
-- **PM** → task-automation skill + Trello entegrasyonu
-- **Developer** → minimal setup, git workflow
-- **Designer** → asset management, feedback collection
-- **Content Creator** → research skill + content skill
-
-**Teknik seviyeye göre:**
-- **Beginner** → Minimal setup, hooks yok
-- **Intermediate** → Standard setup, basic hooks
-- **Advanced** → Full setup, custom skills
-
-### Sık Sorulan Sorular
-
-**S: Tüm template'leri kullanmalı mıyım?**
-A: Hayır, ihtiyacın olanları seç. Minimal setup ile başla, zamanla ekle.
-
-**S: Template'leri nasıl özelleştiririm?**
-A: Kopyala, `[placeholders]` değiştir, gereksizleri sil, kendine özel ekle.
-
-**S: Skill template mi yoksa örnek mi kullanmalıyım?**
-A: Örneğe bak, mantığı anla, kendi skill'in için template'i kullan.
-
-**S: Hook'lar zorunlu mu?**
-A: Hayır, advanced özellik. Beginner'lar için optional.
+Add custom sections to templates:
+- Custom workflows
+- Domain-specific knowledge
+- Team rules
 
 ---
 
-## Sonraki Adımlar
+## Help & Support
 
-1. ✅ Template'leri incele
-2. ✅ Senaryona göre seç (minimal/standard/advanced)
-3. ✅ Kopyala ve özelleştir
-4. ✅ Claude Code ile test et
-5. ✅ İhtiyaca göre genişlet
+### Template Selection by Role
 
-**Hazır mısın?** `SETUP-README.md` dosyasına dön ve setup'a başla!
+- **PM** - task-automation skill + Trello integration
+- **Developer** - minimal setup, git workflow
+- **Designer** - asset management, feedback collection
+- **Content Creator** - research skill + content skill
+
+### Template Selection by Technical Level
+
+- **Beginner** - Minimal setup, no hooks
+- **Intermediate** - Standard setup, basic hooks
+- **Advanced** - Full setup, custom skills
+
+### FAQ
+
+**Q: Should I use all templates?**
+A: No, pick what you need. Start minimal, add over time.
+
+**Q: How do I customize templates?**
+A: Copy, replace `[placeholders]`, delete unnecessary parts, add your own.
+
+**Q: Should I use the skill template or example?**
+A: Look at the example to understand the pattern, use the template for your own skill.
+
+**Q: Are hooks required?**
+A: No, they're an advanced feature. Optional for beginners.
 
 ---
 
-Created: 2025-12-29
+## Next Steps
+
+1. Review templates
+2. Choose your scenario (minimal/standard/advanced)
+3. Copy and customize
+4. Test with Claude Code
+5. Extend as needed
+
+**Ready?** Run `/setup` in Claude Code to begin!
+
+---
+
+Created: 2025-01-09
 Based on: opAgent v1.0

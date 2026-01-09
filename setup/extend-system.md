@@ -232,7 +232,7 @@ grep "Status: Active" memory/projects/*/context.md
 [Updates .claude/settings.json]
 [Tests by restarting session]
 
-"Did you see your project context load? ✓"
+"Did you see your project context load?"
 ```
 
 ---
@@ -273,17 +273,15 @@ Options:
 - Combination of above"
 ```
 
-#### Step 3: Implement in CLAUDE.md
+#### Step 3: Implement as Command File
 ```
-Add to Commands section:
-| /[command] | [Description] |
+Create .claude/commands/[command].md:
 
-Add implementation note:
-## Command: /[command]
-When user types /[command]:
-1. [Step 1]
-2. [Step 2]
-3. [Output format]
+---
+description: [What this command does]
+---
+
+[Instructions for Claude when command is run]
 ```
 
 **Example Command Creation:**
@@ -300,12 +298,12 @@ User: "Yesterday's daily log and current_focus.md"
 Claude: "Any specific format?"
 User: "Just bullet points"
 
-Claude: [Updates CLAUDE.md with:]
-## Commands
-| /standup | Generate daily standup report |
+Claude: [Creates .claude/commands/standup.md:]
+---
+description: Generate daily standup report
+---
 
-## Command: /standup
-When user types /standup:
+Generate a standup report:
 1. Read yesterday's daily log (memory/daily/YYYY-MM-DD.md)
 2. Read current_focus.md
 3. Format as:
@@ -341,7 +339,6 @@ Common tools:
 - Slack → Rube MCP
 - GitHub → Rube MCP (may need connection)
 - Firecrawl, Exa → Rube MCP
-- N8N → n8n-mcp
 - Others → Check available MCPs
 ```
 
@@ -404,7 +401,7 @@ Let me know when you've authorized."
 User: "Done"
 
 Claude: [Tests connection with RUBE_MULTI_EXECUTE_TOOL]
-"✓ Trello connected! I can now:
+"Trello connected! I can now:
 - Fetch your boards and cards
 - Create new cards
 - Update existing cards
@@ -618,11 +615,11 @@ Quick reference for common requests:
 ## Success Criteria
 
 Extension is complete when:
-- ✅ User understands what was added
-- ✅ It works as expected (tested)
-- ✅ Documented (CLAUDE.md or docs/)
-- ✅ User knows how to use it
-- ✅ User can modify it later if needed
+- User understands what was added
+- It works as expected (tested)
+- Documented (CLAUDE.md or docs/)
+- User knows how to use it
+- User can modify it later if needed
 
 ---
 
@@ -650,4 +647,4 @@ Extension is complete when:
 
 ---
 
-**Ready to extend! Let's build together.** 🚀
+**Ready to extend! Let's build together.**
