@@ -42,16 +42,16 @@ Full PRD: `docs/PRD.md`
 - [x] Migrate setup/ to skills (setup + extend are now `.claude/skills/`)
 - [x] Move dev CLAUDE.md to docs/DEVELOPMENT.md, create user-facing CLAUDE.md
 
-**P1 - In Progress:**
+**P1 - Completed:**
 - [x] Update memory system templates (add dashboard)
 - [x] Add /reflect skill (cross-session pattern analysis)
 - [x] Add 3 example setups (developer, PM, content creator)
 - [x] Add agent templates (researcher, planner)
 - [x] Update CONTRIBUTING.md for ALBA
 
-**P2 - Nice to have:**
-- [ ] Skill creator meta-skill
-- [ ] Quality gates (confidence scoring)
+**P2 - Completed:**
+- [x] Skill creator meta-skill (.claude/skills/create-skill/)
+- [x] Quality gates (confidence scoring in planner, research, quality-gates.md template)
 
 ---
 

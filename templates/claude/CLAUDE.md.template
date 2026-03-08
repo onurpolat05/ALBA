@@ -31,6 +31,7 @@ Read relevant files only when needed. Never preload everything.
 | Recording learnings | `.claude/docs/self-improvement.md` |
 | Project context | `memory/projects/[project]/context.md` |
 | Using a skill | `.claude/skills/[skill]/SKILL.md` |
+| Planning or research | `.claude/docs/quality-gates.md` |
 
 ---
 

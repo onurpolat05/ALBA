@@ -9,6 +9,7 @@ Reference for all template files used during `/setup`.
 | `claude/CLAUDE.md.template` | Main agent instruction file (< 200 lines) |
 | `claude/memory-system.md.template` | Memory system documentation |
 | `claude/decision-protocol.md.template` | Decision-making protocol |
+| `claude/quality-gates.md.template` | Confidence scoring for plans and research |
 
 ## Memory Templates
 

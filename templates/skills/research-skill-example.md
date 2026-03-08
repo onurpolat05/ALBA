@@ -42,11 +42,16 @@ Example:
 [2-3 sentences overview]
 
 ### Key Findings
-- Finding 1
-- Finding 2
+- Finding 1 (Confidence: High - multiple sources confirm)
+- Finding 2 (Confidence: Medium - limited sources)
 
 ### Detailed Insights
 [Sections with analysis]
+
+### Confidence Assessment
+- Overall: [High/Medium/Low]
+- Gaps: [What couldn't be verified or found]
+- Conflicting info: [Any contradictions between sources]
 
 ### Sources
 - [Source 1](url)
