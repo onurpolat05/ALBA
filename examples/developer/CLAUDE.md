@@ -148,4 +148,4 @@ Hook scripts: `.claude/hooks/`
 ---
 
 *Powered by ALBA - Your routine-driven AI companion*
-*Last updated: 2025-01-09*
+*Powered by ALBA*

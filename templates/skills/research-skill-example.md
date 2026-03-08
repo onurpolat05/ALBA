@@ -109,4 +109,4 @@ Without any MCP servers, the skill falls back to WebSearch + WebFetch (built-in 
 
 ---
 
-Created: 2025-01-09
+*ALBA v1.0*

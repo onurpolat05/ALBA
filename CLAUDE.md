@@ -34,7 +34,6 @@ Welcome! This is your ALBA agent starter. Run `/setup` to create your personaliz
 |----------|----------|
 | Templates | `templates/INDEX.md` |
 | Examples | `examples/` |
-| Full PRD | `docs/PRD.md` |
 
 ## Progressive Disclosure
 

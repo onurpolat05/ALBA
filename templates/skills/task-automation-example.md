@@ -92,4 +92,4 @@ Configure your MCP server in `.claude/settings.json` or Claude Code MCP settings
 
 ---
 
-Created: 2025-01-09
+*ALBA v1.0*

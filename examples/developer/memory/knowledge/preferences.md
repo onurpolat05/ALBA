@@ -79,4 +79,4 @@ Working style and preferences for the agent.
 
 ---
 
-*Last updated: 2025-01-09*
+*Updated during /setup*

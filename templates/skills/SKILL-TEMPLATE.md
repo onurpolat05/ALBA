@@ -1,4 +1,11 @@
-# [Skill Name] Skill
+---
+name: [skill-name]
+description: [Brief description]
+context: [inline or fork]
+allowed-tools: [Read, Write, WebSearch, etc.]
+---
+
+# [Skill Name]
 
 ## Purpose
 
@@ -70,5 +77,4 @@ Claude: [Uses skill, output]
 
 ---
 
-Created: [Date]
-Last updated: [Date]
+*Created with ALBA*

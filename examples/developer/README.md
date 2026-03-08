@@ -45,7 +45,7 @@ developer/
 - Three-tier memory system (hot/warm/cold)
 
 ### 2. Skills (`.claude/skills/`)
-Skills replace the old `.claude/commands/` pattern. Each skill has:
+Skills are custom capabilities with metadata. Each skill has:
 - A `SKILL.md` file with YAML frontmatter
 - `context: fork` (runs as subagent) or `context: inline` (runs in main context)
 - `allowed-tools` to restrict tool access

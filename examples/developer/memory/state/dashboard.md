@@ -1,6 +1,6 @@
 # Dashboard
 
-**Date:** 2025-01-09
+**Date:** [Today]
 
 ## Priorities
 

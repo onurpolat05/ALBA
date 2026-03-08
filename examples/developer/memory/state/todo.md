@@ -39,4 +39,4 @@
 
 ---
 
-Last updated: 2025-01-09
+Last updated: [Date]
