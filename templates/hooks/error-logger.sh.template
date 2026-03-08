@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# ALBA - Error Logger Hook
+# Event: PostToolUse
+# Matcher: Bash
+# Purpose: Log error patterns to memory/knowledge/errors.md
+#
+# Hook input: JSON on stdin with tool_name, tool_input, tool_output
+
+INPUT=$(cat)
+
+# Extract exit code from output (look for non-zero exit)
+EXIT_CODE=$(echo "$INPUT" | grep -o '"exit_code":[0-9]*' | head -1 | cut -d':' -f2)
+
+# Only log errors (non-zero exit code)
+if [ -z "$EXIT_CODE" ] || [ "$EXIT_CODE" = "0" ]; then
+  exit 0
+fi
+
+# Extract command and error output
+COMMAND=$(echo "$INPUT" | grep -o '"command":"[^"]*"' | head -1 | cut -d'"' -f4)
+TIMESTAMP=$(date +"%Y-%m-%d %H:%M")
+ERRORS_FILE="memory/knowledge/errors.md"
+
+# Create errors file if missing
+if [ ! -f "$ERRORS_FILE" ]; then
+  mkdir -p "$(dirname "$ERRORS_FILE")"
+  echo "# Error Log" > "$ERRORS_FILE"
+  echo "" >> "$ERRORS_FILE"
+  echo "Auto-logged errors for pattern learning." >> "$ERRORS_FILE"
+  echo "" >> "$ERRORS_FILE"
+fi
+
+# Append error entry
+{
+  echo "## [$TIMESTAMP] Exit code: $EXIT_CODE"
+  echo "- Command: \`$COMMAND\`"
+  echo "- Status: Unresolved"
+  echo ""
+} >> "$ERRORS_FILE"

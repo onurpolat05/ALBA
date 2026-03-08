@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# ALBA - Pre-Compact Hook
+# Event: PreCompact
+# Purpose: Preserve critical context before Claude compacts the conversation
+#
+# When Claude's context window fills up, it compacts older messages.
+# This hook outputs critical state so it gets preserved in the compacted summary.
+
+echo "=== CRITICAL CONTEXT (preserve across compaction) ==="
+echo ""
+
+# Current dashboard
+if [ -f "memory/state/dashboard.md" ]; then
+  echo "--- Active Dashboard ---"
+  head -15 memory/state/dashboard.md
+  echo ""
+fi
+
+# Active tasks
+if [ -f "memory/state/todo.md" ]; then
+  echo "--- Active Tasks ---"
+  grep "^- \[ \]" memory/state/todo.md 2>/dev/null | head -10
+  echo ""
+fi
+
+# Recent errors (might be working on fixing them)
+if [ -f "memory/knowledge/errors.md" ]; then
+  RECENT=$(grep -c "Status: Unresolved" memory/knowledge/errors.md 2>/dev/null || echo "0")
+  if [ "$RECENT" -gt 0 ]; then
+    echo "--- Unresolved Errors: $RECENT ---"
+    grep -A2 "Status: Unresolved" memory/knowledge/errors.md | tail -6
+    echo ""
+  fi
+fi
+
+echo "=== END CRITICAL CONTEXT ==="

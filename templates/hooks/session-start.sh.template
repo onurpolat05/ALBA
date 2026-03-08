@@ -1,32 +1,32 @@
 #!/bin/bash
 
-# Session Start Hook
-# Runs when Claude Code session starts
-# Purpose: Load context and show daily summary
+# ALBA - Session Start Hook
+# Event: SessionStart
+# Purpose: Load context and show daily dashboard
 
-echo "=== Session Context ==="
-echo ""
-echo "Date: $(date +%Y-%m-%d)"
+echo "=== ALBA Session ==="
+echo "Date: $(date +%Y-%m-%d %H:%M)"
 echo ""
 
-# Read current focus
-if [ -f "memory/state/current_focus.md" ]; then
-  echo "--- Current Focus ---"
-  head -20 memory/state/current_focus.md
+# Show dashboard
+if [ -f "memory/state/dashboard.md" ]; then
+  echo "--- Dashboard ---"
+  head -20 memory/state/dashboard.md
   echo ""
 fi
 
-# Read active tasks
+# Show active tasks (unchecked only)
 if [ -f "memory/state/todo.md" ]; then
-  echo "--- Active Tasks ---"
-  grep -E "^- \[ \]" memory/state/todo.md | head -5
+  TASKS=$(grep -c "^- \[ \]" memory/state/todo.md 2>/dev/null || echo "0")
+  echo "--- Tasks ($TASKS active) ---"
+  grep "^- \[ \]" memory/state/todo.md | head -5
   echo ""
 fi
 
-# Read today's log if exists
+# Show today's log if exists (resuming session)
 TODAY=$(date +%Y-%m-%d)
 if [ -f "memory/daily/${TODAY}.md" ]; then
-  echo "--- Today's Log ---"
+  echo "--- Resuming Today's Session ---"
   head -10 "memory/daily/${TODAY}.md"
   echo ""
 fi

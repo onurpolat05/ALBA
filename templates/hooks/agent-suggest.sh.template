@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# ALBA - Agent Suggest Hook
+# Event: UserPromptSubmit
+# Purpose: Suggest relevant agents based on keywords in user prompt
+#
+# Hook input: JSON on stdin with user prompt text
+# Hook output: Notification message (stdout)
+
+INPUT=$(cat)
+PROMPT=$(echo "$INPUT" | grep -o '"message":"[^"]*"' | head -1 | cut -d'"' -f4 | tr '[:upper:]' '[:lower:]')
+
+# No prompt found
+if [ -z "$PROMPT" ]; then
+  exit 0
+fi
+
+# Keyword -> agent suggestion mapping
+# Customize these patterns for your workflow
+
+if echo "$PROMPT" | grep -qE "research|investigate|find out|look up|compare"; then
+  echo "Tip: Consider using /research skill or spawning a researcher agent for deep investigation."
+  exit 0
+fi
+
+if echo "$PROMPT" | grep -qE "plan|break down|architect|design system|how should"; then
+  echo "Tip: Consider spawning a planner agent for task breakdown and architecture decisions."
+  exit 0
+fi
+
+if echo "$PROMPT" | grep -qE "review|check quality|audit|security check"; then
+  echo "Tip: Consider spawning a code-reviewer agent for thorough analysis."
+  exit 0
+fi
+
+# No match - silent exit
+exit 0

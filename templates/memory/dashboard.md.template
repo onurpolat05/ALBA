@@ -1,0 +1,42 @@
+# Dashboard
+
+**Date:** [YYYY-MM-DD]
+
+## Priorities
+
+1. [Top priority]
+2. [Second priority]
+3. [Third priority]
+
+## Active Projects
+
+| Project | Status | Next Step | Deadline |
+|---------|--------|-----------|----------|
+| [Project 1] | Active | [Next action] | [Date or -] |
+| [Project 2] | Active | [Next action] | [Date or -] |
+
+## This Week
+
+- [ ] [Task 1]
+- [ ] [Task 2]
+- [ ] [Task 3]
+
+## Upcoming Deadlines
+
+| What | When | Notes |
+|------|------|-------|
+| [Deadline 1] | [Date] | [Context] |
+
+## Last Session
+
+- [What was done]
+- [Key decisions]
+- [Blockers if any]
+
+## Notes
+
+- [Important context for next session]
+
+---
+
+*Auto-updated by /start and /end commands*

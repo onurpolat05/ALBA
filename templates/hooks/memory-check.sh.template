@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# ALBA - Memory Check Hook
+# Event: Stop
+# Purpose: Remind to save memory if session had significant work
+
+echo ""
+echo "=== Session Ending ==="
+
+# Check if daily log exists for today
+TODAY=$(date +%Y-%m-%d)
+if [ ! -f "memory/daily/${TODAY}.md" ]; then
+  echo ""
+  echo "No daily log found for today."
+  echo "Tip: Use /end to save session state automatically."
+fi
+
+echo ""
+echo "Checklist:"
+echo "- [ ] Dashboard updated? (memory/state/dashboard.md)"
+echo "- [ ] Tasks current? (memory/state/todo.md)"
+echo "- [ ] Learnings recorded? (memory/knowledge/learnings.md)"
+echo ""

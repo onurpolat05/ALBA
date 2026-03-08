@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# ALBA - Bash Validator Hook
+# Event: PreToolUse
+# Matcher: Bash
+# Purpose: Block dangerous bash commands
+#
+# Hook input: JSON on stdin with tool_name and tool_input
+# Hook output: JSON with decision (allow/block)
+
+INPUT=$(cat)
+COMMAND=$(echo "$INPUT" | grep -o '"command":"[^"]*"' | head -1 | cut -d'"' -f4)
+
+# If no command found, allow
+if [ -z "$COMMAND" ]; then
+  echo '{"decision": "allow"}'
+  exit 0
+fi
+
+# Dangerous patterns to block
+BLOCKED_PATTERNS=(
+  "rm -rf /"
+  "rm -rf ~"
+  "rm -rf \."
+  "mkfs\."
+  "dd if="
+  ":(){:|:&};:"
+  "shutdown"
+  "reboot"
+  "halt"
+  "> /dev/sda"
+  "chmod -R 777 /"
+  "DROP DATABASE"
+  "DROP TABLE"
+  "DELETE FROM.*WHERE 1"
+  "format c:"
+)
+
+for PATTERN in "${BLOCKED_PATTERNS[@]}"; do
+  if echo "$COMMAND" | grep -qiE "$PATTERN"; then
+    echo "{\"decision\": \"block\", \"reason\": \"Dangerous command blocked: matches pattern '$PATTERN'. Ask user for confirmation before running.\"}"
+    exit 0
+  fi
+done
+
+# Allow everything else
+echo '{"decision": "allow"}'
