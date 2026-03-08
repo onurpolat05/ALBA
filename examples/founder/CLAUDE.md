@@ -74,6 +74,8 @@ Detailed preferences: `memory/knowledge/preferences.md`
 | PreToolUse | `bash-validator.sh` | Block dangerous commands |
 | PostToolUse | `error-logger.sh` | Log error patterns |
 | Stop | `memory-check.sh` | Remind to save state |
+| UserPromptSubmit | `agent-suggest.sh` | Suggest relevant skills |
+| PreCompact | `pre-compact.sh` | Preserve critical context |
 
 ---
 

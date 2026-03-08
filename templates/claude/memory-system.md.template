@@ -10,7 +10,7 @@ The memory system helps Claude remember context across sessions. It's organized 
 memory/
 ├── state/              # Current state (updated frequently)
 │   ├── todo.md        # Active tasks and goals
-│   └── current_focus.md # Current priorities
+│   └── dashboard.md # Current priorities
 ├── knowledge/         # Long-term knowledge (updated occasionally)
 │   ├── learnings.md   # Accumulated knowledge
 │   ├── preferences.md # User preferences
@@ -33,7 +33,7 @@ memory/
 - Blockers
 - Update at session start/end
 
-**current_focus.md**
+**dashboard.md**
 - Current priorities
 - Last session summary
 - Next session plan
@@ -77,14 +77,14 @@ Each project gets its own folder with:
 
 ### 1. Progressive Disclosure
 Don't load all memory files at once. Claude reads what's needed:
-- Session start → `todo.md`, `current_focus.md`
+- Session start → `todo.md`, `dashboard.md`
 - Error encountered → `errors.md`
 - Project work → `projects/[name]/context.md`
 - Learning recorded → `learnings.md`
 
 ### 2. Keep It Updated
 - Update `todo.md` weekly
-- Update `current_focus.md` at session end
+- Update `dashboard.md` at session end
 - Let Claude auto-update `learnings.md` and `errors.md`
 
 ### 3. Use Clear Language
@@ -108,7 +108,7 @@ Don't load all memory files at once. Claude reads what's needed:
 
 ### Session Start
 1. Run `/start`
-2. Claude reads `todo.md` and `current_focus.md`
+2. Claude reads `todo.md` and `dashboard.md`
 3. Shows priorities and tasks
 4. Ready to work
 
@@ -121,7 +121,7 @@ Don't load all memory files at once. Claude reads what's needed:
 ### Session End
 1. Run `/end`
 2. Claude creates daily log
-3. Updates `current_focus.md`
+3. Updates `dashboard.md`
 4. Summarizes accomplishments
 
 ## Tips

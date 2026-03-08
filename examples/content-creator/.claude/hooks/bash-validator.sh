@@ -37,7 +37,7 @@ fi
 BLOCKED_PATTERNS=(
   "rm -rf /"
   "rm -rf ~"
-  "rm -rf \."
+  "rm -rf \.$"
   "mkfs\."
   "dd if="
   ":(){:|:&};:"

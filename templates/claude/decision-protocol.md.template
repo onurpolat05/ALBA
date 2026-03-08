@@ -25,7 +25,7 @@ Claude can proceed without asking when:
 - `memory/knowledge/learnings.md` - Record new learnings
 - `memory/knowledge/errors.md` - Log error solutions
 - `memory/daily/YYYY-MM-DD.md` - Create/update daily logs
-- `memory/state/current_focus.md` - Update session context
+- `memory/state/dashboard.md` - Update session context
 
 ### 4. Analysis & Suggestions
 - Code review

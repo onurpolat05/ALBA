@@ -36,6 +36,16 @@ Close the session with a structured 3-question protocol. Save state for next ses
 **Application:** [When to apply this]
 ```
 
+**Errors** (`memory/knowledge/errors.md`):
+- Check `memory/knowledge/errors_raw.log` for new entries from this session
+- If errors were resolved during the session, consolidate them into `errors.md`:
+```markdown
+## [Error Type] - YYYY-MM-DD
+**Pattern:** [What triggers this error]
+**Solution:** [How it was resolved]
+**Prevention:** [How to avoid it]
+```
+
 **Daily Log** (`memory/daily/YYYY-MM-DD.md`):
 - Create with session summary:
 ```markdown

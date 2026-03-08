@@ -30,7 +30,8 @@ founder/
 │   │   ├── behavioral.md             # Business decision protocol
 │   │   └── security.md               # Client data, credentials
 │   └── docs/
-│       └── decision-protocol.md
+│       ├── decision-protocol.md
+│       └── memory-system.md
 ```
 
 ## Key Differentiators

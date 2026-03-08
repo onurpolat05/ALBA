@@ -1,5 +1,4 @@
 # ALBA .gitignore
-# Template repo: keep structure, ignore user-generated content
 
 # Environment & secrets
 .env
@@ -8,12 +7,6 @@
 *.pem
 *.key
 credentials.*
-
-# User-generated memory content (keep directories via .gitkeep)
-memory/state/*.md
-memory/knowledge/errors.md
-memory/daily/*.md
-memory/projects/*/
 
 # OS files
 .DS_Store

@@ -55,7 +55,8 @@ memory/
 .claude/
 ├── docs/
 │   ├── memory-system.md      # from templates/claude/memory-system.md.template
-│   └── decision-protocol.md  # from templates/claude/decision-protocol.md.template
+│   ├── decision-protocol.md  # from templates/claude/decision-protocol.md.template
+│   └── quality-gates.md      # from templates/claude/quality-gates.md.template
 └── rules/                    # rules auto-load from here
 ```
 

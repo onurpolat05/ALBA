@@ -80,7 +80,7 @@ Three-tier file-based memory that survives across sessions. Git-tracked, human-r
 | Session starts | Dashboard loads, priorities shown |
 | Dangerous command | Blocked before execution |
 | Bash error | Auto-logged for pattern detection |
-| Session idle | Reminder to save state |
+| Session ending | Reminder to save state |
 | You type a prompt | Relevant skills suggested |
 | Context compacting | Critical info preserved |
 
