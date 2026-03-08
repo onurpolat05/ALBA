@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {"type": "command", "command": "bash .claude/hooks/session-start.sh"}
+    ],
+    "PreToolUse": [
+      {"matcher": "Bash", "type": "command", "command": "bash .claude/hooks/bash-validator.sh"}
+    ],
+    "PostToolUse": [
+      {"matcher": "Bash", "type": "command", "command": "bash .claude/hooks/error-logger.sh"}
+    ],
+    "Stop": [
+      {"type": "command", "command": "bash .claude/hooks/memory-check.sh"}
+    ],
+    "UserPromptSubmit": [
+      {"type": "command", "command": "bash .claude/hooks/agent-suggest.sh"}
+    ],
+    "PreCompact": [
+      {"type": "command", "command": "bash .claude/hooks/pre-compact.sh"}
+    ]
+  }
+}

@@ -1,4 +1,7 @@
-# Research Skill Example
+# Research Skill - Reference Guide
+
+> **Note:** This is a reference guide for understanding and customizing the research skill.
+> The actual skill is at `.claude/skills/research/SKILL.md`.
 
 ## Purpose
 

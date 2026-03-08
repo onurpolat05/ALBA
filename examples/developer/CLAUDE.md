@@ -61,10 +61,11 @@ Three-tier architecture - update as you work:
 
 | Skill | Purpose | Context |
 |-------|---------|---------|
-| `/research` | Web research and information gathering | fork |
 | `/start` | Begin session, load dashboard, show priorities | inline |
 | `/end` | End session, save state, create daily log | inline |
 | `/status` | Quick status overview | inline |
+| `/research` | Web research and information gathering | fork |
+| `/weekly-review` | Weekly performance review and planning | inline |
 | `/extend` | Add new features interactively | inline |
 | `/reflect` | Cross-session pattern analysis | fork |
 
@@ -148,4 +149,3 @@ Hook scripts: `.claude/hooks/`
 ---
 
 *Powered by ALBA - Your routine-driven AI companion*
-*Powered by ALBA*

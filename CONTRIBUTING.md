@@ -6,17 +6,27 @@ Thank you for your interest in contributing! This project thrives on community c
 
 ```
 alba/
-├── CLAUDE.md                  # Minimal starter (replaced by /setup)
-├── .claude/skills/            # setup/ and extend/ skills
-├── templates/                 # Source templates
+├── CLAUDE.md                  # Entry point (replaced by /setup)
+├── .claude/
+│   ├── skills/                # Pre-built skills (9 total)
+│   │   ├── setup/             # /setup - interactive setup wizard
+│   │   ├── start/             # /start - session start
+│   │   ├── end/               # /end - session end
+│   │   ├── status/            # /status - quick overview
+│   │   ├── research/          # /research - web research (fork)
+│   │   ├── weekly-review/     # /weekly-review - weekly performance review
+│   │   ├── extend/            # /extend - add features
+│   │   ├── reflect/           # /reflect - pattern analysis
+│   │   └── create-skill/      # /create-skill - skill creation wizard
+│   ├── docs/                  # Reference docs (lazy-loaded)
+│   └── hooks/                 # (created by /setup from templates)
+├── templates/                 # Source templates for /setup
 │   ├── claude/                # CLAUDE.md + docs templates
-│   ├── memory/                # Memory templates
+│   ├── memory/                # Memory file templates
 │   ├── hooks/                 # Hook script templates (6)
 │   ├── rules/                 # Rule templates (2)
-│   ├── skills/                # Skill templates
-│   └── agents/                # Agent definition templates
-├── examples/                  # Role-based example setups
-└── docs/                      # PRD, development guide
+│   └── skills/                # Skill reference guides
+└── examples/                  # Role-based example setups (5)
 ```
 
 ## Contribution Types

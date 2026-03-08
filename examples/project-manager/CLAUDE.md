@@ -80,10 +80,11 @@ Three-tier architecture - update as you work:
 
 | Skill | Purpose | Context |
 |-------|---------|---------|
-| `research` | Market research, competitor analysis, best practices | fork |
 | `/start` | Begin session, load dashboard, show priorities | inline |
 | `/end` | End session, save state, create daily log | inline |
 | `/status` | Quick status overview | inline |
+| `/research` | Market research, competitor analysis, best practices | fork |
+| `/weekly-review` | Weekly performance review and planning | inline |
 | `/extend` | Add new features interactively | inline |
 | `/reflect` | Cross-session pattern analysis | fork |
 

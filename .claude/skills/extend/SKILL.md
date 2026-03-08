@@ -2,7 +2,7 @@
 name: extend
 description: Add new features to your ALBA agent system
 context: inline
-allowed-tools: Read, Write, Edit, Glob, Grep, AskUserQuestion
+allowed-tools: [Read, Write, Edit, Glob, Grep, AskUserQuestion]
 ---
 
 # ALBA Extend

@@ -2,7 +2,7 @@
 name: reflect
 description: Cross-session pattern analysis - find recurring themes, derive rules
 context: fork
-allowed-tools: Read, Write, Glob, Grep
+allowed-tools: [Read, Write, Glob, Grep]
 ---
 
 # ALBA Reflect

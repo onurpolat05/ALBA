@@ -1,6 +1,6 @@
 # ALBA
 
-Welcome! This is your ALBA agent starter. Run `/setup` to create your personalized AI agent system.
+Welcome! This is your ALBA agent. Run `/setup` to create your personalized AI agent system.
 
 ## Quick Start
 

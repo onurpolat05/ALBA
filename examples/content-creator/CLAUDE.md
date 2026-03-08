@@ -64,6 +64,8 @@ Read relevant files only when needed. Don't load everything into context.
 | `/start` | Begin session, load context, show content priorities |
 | `/end` | End session, save state, create summary |
 | `/status` | Quick status on content pipeline |
+| `/research` | Content research and trend analysis | fork |
+| `/weekly-review` | Weekly content performance review | inline |
 
 ---
 

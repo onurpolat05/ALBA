@@ -28,7 +28,7 @@ Read relevant files only when needed. Never preload everything.
 | Before decisions | `.claude/docs/decision-protocol.md` |
 | Using memory system | `.claude/docs/memory-system.md` |
 | Error encountered | `memory/knowledge/errors.md` |
-| Recording learnings | `.claude/docs/self-improvement.md` |
+| Recording learnings | `memory/knowledge/learnings.md` |
 | Project context | `memory/projects/[project]/context.md` |
 | Using a skill | `.claude/skills/[skill]/SKILL.md` |
 | Planning or research | `.claude/docs/quality-gates.md` |
@@ -65,9 +65,10 @@ Three-tier architecture - update as you work:
 | `/start` | Begin session, load dashboard, show priorities | inline |
 | `/end` | End session, save state, create daily log | inline |
 | `/status` | Quick status overview | inline |
+| `/research` | Web research with structured output | fork |
+| `/weekly-review` | Weekly performance review and planning | inline |
 | `/extend` | Add new features interactively | inline |
 | `/reflect` | Cross-session pattern analysis | fork |
-| [/custom] | [Description] | [inline/fork] |
 
 Skills use frontmatter format:
 ```yaml

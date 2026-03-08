@@ -2,7 +2,7 @@
 name: create-skill
 description: Create a new skill with proper Skills 2.0 format
 context: inline
-allowed-tools: Read, Write, Edit, AskUserQuestion
+allowed-tools: [Read, Write, Edit, AskUserQuestion]
 ---
 
 # ALBA Skill Creator
