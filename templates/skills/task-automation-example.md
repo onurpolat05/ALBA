@@ -14,7 +14,7 @@ Claude should use this skill when:
 
 ## How It Works
 
-1. Connect to task management tool (Trello/Notion via Rube MCP)
+1. Connect to task management tool (Trello/Notion via MCP)
 2. Parse user request (what action, which board/list, task details)
 3. Execute task operation
 4. Confirm completion with user
@@ -45,9 +45,15 @@ Example:
 ## Configuration
 
 ### Required Settings
-- Rube MCP configured
-- Trello or Notion connection active
+- Trello or Notion MCP server configured
 - Default board/list IDs (stored in memory)
+
+### MCP Options
+| MCP Server | Purpose |
+|-----------|---------|
+| Trello MCP | `mcp__trello__*` - Board/card/list operations |
+| Notion MCP | `mcp__notion__*` - Database/page operations |
+| Linear MCP | `mcp__linear__*` - Issue tracking |
 
 ### Optional Settings
 - Default labels
@@ -72,10 +78,10 @@ Output: Moved 5 tasks, updated 3 due dates
 
 ## Dependencies
 
-- **Rube MCP** - For Trello/Notion access
-- **RUBE_SEARCH_TOOLS** - Find task management tools
-- **RUBE_MULTI_EXECUTE_TOOL** - Execute operations
+- **Trello/Notion/Linear MCP** - Your task management MCP server
 - **Memory** - Store board/list IDs and preferences
+
+Configure your MCP server in `.claude/settings.json` or Claude Code MCP settings.
 
 ## Notes
 

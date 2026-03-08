@@ -1,21 +1,98 @@
-# opAgent Starter
+# ALBA
 
-**Build your own AI personal assistant with Claude Code**
+**Your routine-driven AI companion** | Built on Claude Code
 
-An interactive setup system that creates a customized AI agent workspace tailored to your role, workflow, and tools.
+ALBA transforms Claude Code from a developer tool into a **personal AI agent** that adapts to any role - developer, PM, designer, content creator, founder, or anyone who wants an organized, self-improving AI workflow.
+
+> Named after Abla the cat. *Alba* means "dawn" in Latin - a new beginning for your AI workflow.
 
 ---
 
-## What is opAgent?
+## What ALBA Does
 
-opAgent Starter is an open-source template for building personalized AI agent systems powered by Claude Code. Instead of a one-size-fits-all solution, it asks you questions about your work and builds a system specifically for you.
+- Interactive setup that builds a personalized agent in ~10 minutes
+- Persistent memory system that learns and grows across sessions
+- Extensible skills, hooks, and rules architecture
+- Self-improvement: automatically learns from errors and records insights
+- Works for any profession, not just developers
 
-### What makes it different?
+## What Makes ALBA Different
 
-- **Interactive Setup:** Answer 5-7 questions, get a personalized agent
-- **User-Centric:** You're involved in every decision, no black boxes
-- **Extensible:** Easily add skills, hooks, and integrations after setup
-- **Dynamic but Simple:** Adapts to your needs without overwhelming complexity
+| Feature | Generic AI | Other CC Tools | ALBA |
+|---------|-----------|----------------|------|
+| Memory across sessions | No | Some (memory only) | Full system (state/knowledge/projects) |
+| Role support | Generic | Developer-only | Any role |
+| Setup experience | None | Copy-paste config | Interactive, collaborative |
+| Self-improvement | No | No | Auto error+learning capture |
+| Extensibility | No | Limited | Skills + Hooks + Rules + Agents |
+
+---
+
+## Quick Start
+
+### Option 1: GitHub Template (Recommended)
+
+Click **"Use this template"** on GitHub, then:
+
+```bash
+git clone https://github.com/YOUR-USERNAME/YOUR-REPO.git my-agent
+cd my-agent
+claude
+```
+
+### Option 2: Direct Clone
+
+```bash
+git clone https://github.com/onurpolat05/alba.git my-agent
+cd my-agent
+rm -rf .git && git init
+claude
+```
+
+### Then Run Setup
+
+```
+/setup
+```
+
+Answer 7 questions about your role, tools, and preferences. ALBA builds your personalized agent system.
+
+---
+
+## Architecture
+
+After `/setup`, your workspace looks like:
+
+```
+your-agent/
+├── CLAUDE.md                     # Agent brain (< 200 lines, progressive disclosure)
+├── memory/
+│   ├── state/                    # Hot: dashboard, tasks (updated every session)
+│   ├── knowledge/                # Warm: learnings, errors, preferences
+│   ├── projects/                 # Cold: per-project context
+│   └── daily/                    # Logs: auto-created session summaries
+├── .claude/
+│   ├── skills/                   # Custom capabilities
+│   │   ├── setup/SKILL.md        # /setup - interactive setup
+│   │   ├── extend/SKILL.md       # /extend - add features
+│   │   └── research/SKILL.md     # /research - web research
+│   ├── hooks/                    # Event automation (6 hooks)
+│   ├── rules/                    # Behavioral rules (auto-loaded)
+│   └── docs/                     # System docs (lazy-loaded)
+└── templates/                    # Reference templates
+```
+
+### Core Systems
+
+**Memory** - Three-tier file-based memory. Human-readable markdown, git-trackable, zero dependencies.
+
+**Skills 2.0** - Capabilities with frontmatter (`context: fork`, `allowed-tools`). Run as slash commands.
+
+**Hooks** - 6 automated event responses: session start/stop, bash safety, error logging, agent suggestions, context preservation.
+
+**Rules** - Behavioral guidelines that auto-load from `.claude/rules/`. Decision protocol + security defaults included.
+
+**Progressive Disclosure** - CLAUDE.md stays under 200 lines. Details lazy-load from `.claude/docs/` when needed.
 
 ---
 
@@ -23,282 +100,101 @@ opAgent Starter is an open-source template for building personalized AI agent sy
 
 | Role | What You Get |
 |------|--------------|
-| **Project Managers** | Task tracking, email categorization, client updates, Trello/Notion integration |
-| **Developers** | Code organization, PR tracking, GitHub integration, development workflows |
-| **Designers** | Asset management, feedback collection, design system workflows |
-| **Content Creators** | Research automation, content generation, social media scheduling |
+| **Developers** | Research skills, task tracking, git workflows, code organization |
+| **Project Managers** | Task management, email triage, team updates, meeting prep |
+| **Content Creators** | Research automation, content planning, multi-platform publishing |
+| **Founders** | Executive assistant, prioritization, delegation, investor prep |
 | **Anyone** | Customized to your specific workflow and tools |
 
 ---
 
-## Quick Start
+## Skills & Commands
 
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/onurpolat05/opagent-starter.git my-agent
-cd my-agent
-```
-
-### 2. Open Claude Code
-
-```bash
-claude
-```
-
-### 3. Run Setup
-
-```
-/setup
-```
-
-### 4. Answer Questions & Done!
-
-The setup asks about your role, tools, and preferences, then builds your personalized agent system.
+| Command | Description |
+|---------|-------------|
+| `/setup` | Interactive first-time setup |
+| `/start` | Begin session, load context |
+| `/end` | End session, save state |
+| `/status` | Quick overview |
+| `/extend` | Add new features |
+| `/reflect` | Cross-session pattern analysis |
+| `/research` | Web research with structured output |
 
 ---
 
-## Features
+## Hooks
 
-### Core System
-
-- **Memory System:** Tracks your tasks, priorities, learnings, and preferences
-- **Progressive Disclosure:** Loads only what's needed, when needed
-- **Self-Improving:** Learns from errors and records insights automatically
-- **Customizable:** Every aspect can be tailored to your workflow
-
-### What Gets Created
-
-After setup, you'll have:
-
-```
-your-workspace/
-├── memory/
-│   ├── state/              # Current tasks and focus
-│   ├── knowledge/          # Learnings and preferences
-│   └── daily/              # Session logs
-├── .claude/
-│   ├── commands/           # Custom commands (/start, /end, etc.)
-│   ├── skills/             # Custom capabilities
-│   ├── hooks/              # Automation workflows
-│   └── docs/               # Documentation
-└── CLAUDE.md               # Your agent's core instructions
-```
-
-### Extensibility
-
-Add new features anytime:
-
-```
-"I want to add a research skill"
-→ Claude guides you through creating it
-
-"Create a hook to auto-load context"
-→ Built together, step by step
-
-"Connect my Trello account"
-→ Interactive MCP setup
-```
-
----
-
-## How It Works
-
-### Phase 1: Discovery (5-7 questions)
-
-```
-1. What's your role? (PM, Developer, Designer, etc.)
-2. What takes up your time daily?
-3. What frustrates you most?
-4. Which tools do you use?
-5. What do you want to automate?
-6. Technical comfort level?
-7. Setup preference? (Minimal/Standard/Custom)
-```
-
-### Phase 2: Build Together
-
-Based on your answers, Claude creates:
-- Personalized CLAUDE.md (your agent's instructions)
-- Memory system structure
-- Initial content (your tasks, priorities)
-- Optional features (skills, hooks, integrations)
-
-### Phase 3: Test & Confirm
-
-- Run `/start` to test
-- Verify everything works
-- Make adjustments
-- You're ready to go!
-
-### Phase 4: Extend Anytime
-
-After setup:
-- `/start` - Begin daily session
-- `/end` - Save session summary
-- `/status` - Quick status check
-- `/extend` - Add new features
+| Hook | Event | Purpose |
+|------|-------|---------|
+| `session-start.sh` | SessionStart | Load dashboard, show priorities |
+| `memory-check.sh` | Stop | Remind to save state |
+| `bash-validator.sh` | PreToolUse | Block dangerous commands |
+| `error-logger.sh` | PostToolUse | Auto-log errors |
+| `agent-suggest.sh` | UserPromptSubmit | Suggest agents by keyword |
+| `pre-compact.sh` | PreCompact | Preserve context before compaction |
 
 ---
 
 ## Examples
 
-See the `examples/` directory for real-world setups:
+See `examples/` for complete setups:
 
-- **software-engineer/** - Developer-focused setup with research skills and task management
-
-### Example: Developer Setup
-
-```
-User: "I'm a software developer"
-→ What takes up your time? "Writing code, reviewing PRs, research"
-→ Tools? "GitHub, Notion, Slack"
-→ Automate? "Research workflow, task organization"
-→ Tech level? "Advanced"
-
-Result:
-✓ Developer-focused CLAUDE.md
-✓ GitHub integration guidance
-✓ Task automation skill
-✓ Research skill for technical docs
-✓ Session hooks for context loading
-```
+- **developer/** - Software engineer with research, task management, and git workflows
+- **project-manager/** - PM with task tracking, email triage, and team coordination
+- **content-creator/** - Writer with content calendar, research, and multi-platform publishing
 
 ---
 
-## Architecture
+## Extending ALBA
 
-### Two-Phase System
+After setup, add features anytime:
 
-**1. Initial Setup** (`setup/initial-setup.md`)
-- Interactive question flow
-- Structure creation
-- Personalized CLAUDE.md generation
-- First-run testing
+```
+/extend
+```
 
-**2. Extension System** (`setup/extend-system.md`)
-- Add skills (new capabilities)
-- Create hooks (automation)
-- Add commands (shortcuts)
-- Connect tools (MCP integrations)
-- Define rules (behavioral guidelines)
+Or just ask:
+- "I want to add a content creation skill"
+- "Create a hook to auto-commit on session end"
+- "Add a rule for code review standards"
+- "Connect my Trello board"
 
-### Key Design Principles
-
-1. **User Involvement:** Never decide alone, always collaborate
-2. **Progressive Complexity:** Start simple, grow as needed
-3. **Maintainability:** Simple over clever, well-documented
-4. **Adaptability:** Works for any role, workflow, or tool set
-
----
-
-## Documentation
-
-| Document | Purpose |
-|----------|---------|
-| `setup/initial-setup.md` | Interactive first-time setup guide |
-| `setup/extend-system.md` | Adding features after setup |
-| `templates/` | All template files (memory, skills, hooks) |
-| `templates/INDEX.md` | Template reference and guide |
-| `examples/` | Real-world setup examples |
+ALBA guides you through it step by step.
 
 ---
 
 ## Requirements
 
-- **Claude Code** (CLI) - [Install here](https://docs.anthropic.com/en/docs/claude-code)
-- **Git** (for cloning)
+- **Claude Code CLI** v2.1.50+ ([Install](https://docs.anthropic.com/en/docs/claude-code))
+- **Git**
+
+MCP servers (Trello, Gmail, Calendar, etc.) are optional enhancements - ALBA works standalone.
 
 ---
 
 ## Contributing
 
-Contributions welcome! Here's how:
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
-### Adding Templates
-
-- New skill templates → `templates/skills/`
-- New hook examples → `templates/hooks/`
-- New docs → `templates/claude/`
-
-### Sharing Use Cases
-
-- Add to `examples/` directory
-- Share your setup config
-- Document what works for your role
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
----
-
-## Roadmap
-
-- [ ] More example setups (PM, Designer, Content Creator)
-- [ ] Web-based template gallery
-- [ ] Video tutorials
-- [ ] Community skill library
-- [ ] VS Code extension integration
-
----
-
-## Inspiration
-
-This project was inspired by:
-- Personal productivity systems (GTD, PARA, Zettelkasten)
-- CLI setup tools (create-react-app, vue-cli)
-- The need for personalized AI workflows
-- The power of Claude Code for agent building
+**Most valuable contributions:**
+- Example setups for different roles
+- Custom skill templates
+- Hook recipes
+- Integration guides
 
 ---
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details
+MIT License - see [LICENSE](LICENSE)
 
 ---
 
 ## Community
 
-- **Issues:** [GitHub Issues](https://github.com/onurpolat05/opagent-starter/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/onurpolat05/opagent-starter/discussions)
-- **Examples:** Share your setup in the `examples/` directory
+- [GitHub Issues](https://github.com/onurpolat05/alba/issues) - Bug reports & feature requests
+- [GitHub Discussions](https://github.com/onurpolat05/alba/discussions) - Questions & ideas
 
 ---
 
-## FAQ
-
-### Do I need technical knowledge?
-
-No! The system adapts to your technical level. Beginners get simple setups with lots of guidance.
-
-### Can I use this with my existing Claude Code setup?
-
-Yes! Clone to a new directory and run `/setup`.
-
-### What if I want to change something after setup?
-
-Everything is customizable. Edit CLAUDE.md, memory files, or use `/extend` to add features.
-
-### Can I share my setup with my team?
-
-Yes! You can share your config and templates.
-
----
-
-## Get Started
-
-```bash
-git clone https://github.com/onurpolat05/opagent-starter.git my-agent
-cd my-agent
-claude
-```
-
-Then run `/setup` and follow the prompts.
-
-**Build your personalized AI agent in under 10 minutes.**
-
----
-
-**Made with care by the opAgent community**
-
-[Star on GitHub](https://github.com/onurpolat05/opagent-starter) | [Discussions](https://github.com/onurpolat05/opagent-starter/discussions)
+*Powered by ALBA - Consistent. Independent. Always learning.*

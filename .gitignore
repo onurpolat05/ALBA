@@ -1,0 +1,34 @@
+# ALBA .gitignore
+# Template repo: keep structure, ignore user-generated content
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials.*
+
+# User-generated memory content (keep directories via .gitkeep)
+memory/state/*.md
+memory/knowledge/errors.md
+memory/daily/*.md
+memory/projects/*/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Node (if MCP servers are installed locally)
+node_modules/
+package-lock.json
+
+# Claude Code local settings
+.claude/settings.local.json

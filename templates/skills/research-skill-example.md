@@ -56,8 +56,15 @@ Example:
 ## Configuration
 
 ### Required Settings
-- Rube MCP must be configured
-- Exa and Firecrawl access
+- At least one search MCP server configured (see options below)
+
+### MCP Options (pick what you need)
+| MCP Server | Purpose | Setup |
+|-----------|---------|-------|
+| Exa | Semantic search | `mcp__exa__web_search_exa` |
+| Firecrawl | Web scraping, crawling | `mcp__firecrawl__firecrawl_scrape` |
+| WebSearch (built-in) | Basic web search | No setup needed (Claude Code built-in) |
+| WebFetch (built-in) | Fetch URL content | No setup needed (Claude Code built-in) |
 
 ### Optional Settings
 - Default search depth (quick/deep)
@@ -81,10 +88,11 @@ Output: Comprehensive report with detailed analysis
 
 ## Dependencies
 
-- **Rube MCP** - For Exa and Firecrawl access
-- **RUBE_SEARCH_TOOLS** - Find Exa and Firecrawl tools
-- **RUBE_MULTI_EXECUTE_TOOL** - Execute searches
-- **RUBE_REMOTE_WORKBENCH** - For data analysis (if large datasets)
+- **WebSearch / WebFetch** (built-in) - Basic search, no setup needed
+- **Exa MCP** (optional) - Semantic search for higher quality results
+- **Firecrawl MCP** (optional) - Full page scraping and site crawling
+
+Without any MCP servers, the skill falls back to WebSearch + WebFetch (built-in Claude Code tools).
 
 ## Notes
 

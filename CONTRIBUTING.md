@@ -1,22 +1,66 @@
-# Contributing to opAgent Starter
+# Contributing to ALBA
 
 Thank you for your interest in contributing! This project thrives on community contributions.
 
-## How to Contribute
+## Project Structure
 
-### 1. Share Your Setup
+```
+alba/
+├── CLAUDE.md                  # Minimal starter (replaced by /setup)
+├── .claude/skills/            # setup/ and extend/ skills
+├── templates/                 # Source templates
+│   ├── claude/                # CLAUDE.md + docs templates
+│   ├── memory/                # Memory templates
+│   ├── hooks/                 # Hook script templates (6)
+│   ├── rules/                 # Rule templates (2)
+│   ├── skills/                # Skill templates
+│   └── agents/                # Agent definition templates
+├── examples/                  # Role-based example setups
+└── docs/                      # PRD, development guide
+```
 
-The most valuable contribution is sharing how YOU use opAgent:
+## Contribution Types
 
-**Create an example in `examples/`:**
+### 1. Skill Templates
+
+Add new skill templates under `templates/skills/`. Use frontmatter format:
+
+```yaml
+---
+name: skill-name
+description: What this skill does
+context: When to use it
+allowed-tools: [Read, Write, Bash, etc.]
+---
+```
+
+Follow `templates/skills/SKILL-TEMPLATE.md` for the full structure.
+
+### 2. Hook Recipes
+
+Bash scripts for Claude Code events. Add under `templates/hooks/`.
+
+- Test thoroughly before submitting
+- Add comments explaining what it does
+- Follow existing hook patterns (see `templates/hooks/README-hooks.md`)
+
+### 3. Rule Templates
+
+Auto-loaded files for `.claude/rules/`. Add under `templates/rules/`.
+
+- Keep rules focused and actionable
+- Follow existing format in `templates/rules/`
+
+### 4. Example Setups
+
+Role-based complete configurations under `examples/`:
 
 ```
 examples/
-└── [your-role]-setup/
+└── [your-role]/
     ├── README.md           # How you use it
     ├── CLAUDE.md           # Your CLAUDE.md (anonymized)
-    ├── sample-workflow.md  # Example workflows
-    └── skills/             # Your custom skills
+    └── ...                 # Custom skills, memory, etc.
 ```
 
 **What to include:**
@@ -26,50 +70,15 @@ examples/
 - Workflows that work well
 - Tips and tricks
 
-### 2. Improve Templates
+### 5. Agent Definitions
 
-**Add new skill templates:**
-- Research existing skills first
-- Follow `templates/skills/SKILL-TEMPLATE.md` structure
-- Include clear documentation
-- Add usage examples
+Agent templates under `templates/agents/`. Define reusable agent personas with clear roles and capabilities.
 
-**Add new hook templates:**
-- Test thoroughly before submitting
-- Add comments explaining what it does
-- Include installation instructions
+### 6. Documentation Improvements
 
-**Add new docs:**
 - Fill gaps in documentation
-- Add tutorials
-- Create video walkthroughs
-
-### 3. Enhance Setup Flow
-
-**Improve questions:**
-- Make discovery questions clearer
-- Add new question types for better customization
-- Improve role-specific recommendations
-
-**Better onboarding:**
-- Simplify initial setup
-- Add more guidance for beginners
-- Improve error messages
-
-### 4. Fix Bugs
-
-- Check existing issues first
-- Create a new issue describing the bug
-- Submit a PR with the fix
-- Include tests if applicable
-
-### 5. Add Features
-
-**Before adding a feature:**
-1. Open an issue to discuss
-2. Get feedback from maintainers
-3. Ensure it aligns with project goals
-4. Keep it simple and user-friendly
+- Add tutorials and walkthroughs
+- Improve existing guides in `docs/`
 
 ---
 
@@ -78,36 +87,32 @@ examples/
 ### Prerequisites
 
 - Git
-- Claude Code CLI
-- Bash (for install script)
-- Optional: Node.js (for future npm package)
+- Claude Code CLI (`claude`)
 
 ### Local Development
 
 1. Fork the repository
+
 2. Clone your fork:
 ```bash
-git clone https://github.com/your-username/opagent-starter.git
-cd opagent-starter
+git clone https://github.com/your-username/alba.git
+cd alba
 ```
 
-3. Create a test workspace:
+3. Test the setup flow:
 ```bash
-./install.sh
-# Use a test directory for development
+claude
+# Run /setup to test the full flow
 ```
 
 4. Make your changes
 
-5. Test thoroughly:
+5. Verify your changes:
 ```bash
-# Test install script
-./install.sh
-
-# Test setup flow
-cd test-workspace
-claude-code
-# Run through setup process
+# After modifying templates, run /setup again
+# to confirm the flow still works correctly
+claude
+# /setup
 ```
 
 6. Commit and push:
@@ -117,7 +122,7 @@ git commit -m "feat: description of your changes"
 git push origin your-branch
 ```
 
-7. Create a Pull Request
+7. Create a Pull Request against [onurpolat05/alba](https://github.com/onurpolat05/alba)
 
 ---
 
@@ -148,7 +153,7 @@ Use conventional commits:
 
 ```
 feat: add new skill template for email automation
-fix: correct install script path issue
+fix: correct template path issue
 docs: improve setup flow documentation
 chore: update dependencies
 ```
@@ -166,20 +171,20 @@ Types:
 
 1. **Update documentation** if needed
 2. **Add examples** if adding features
-3. **Test thoroughly** on clean install
+3. **Test thoroughly** - run `/setup` after template changes
 4. **Keep PRs focused** - one feature/fix per PR
 5. **Respond to feedback** promptly
 
 ### What Makes a Good PR
 
-✅ **Good:**
+**Good:**
 - Solves a specific problem
 - Includes documentation
 - Has examples
 - Well-tested
 - Clear commit messages
 
-❌ **Avoid:**
+**Avoid:**
 - Multiple unrelated changes
 - Breaking existing functionality
 - No documentation
@@ -203,25 +208,22 @@ Types:
    - Content generation
 
 3. **Documentation**
-   - Video tutorials
+   - Tutorials
    - Setup walkthroughs
    - Troubleshooting guides
 
 ### Medium Priority
 
 1. **Testing**
-   - Automated install tests
    - Template validation
    - Cross-platform testing
 
 2. **Tooling**
    - NPM package
-   - VS Code extension
    - Web template gallery
 
 3. **Community**
    - Discord server setup
-   - Regular Q&A sessions
    - Showcase examples
 
 ---
@@ -253,9 +255,8 @@ Types:
 
 ## Questions?
 
-- **Issues:** For bugs and feature requests
-- **Discussions:** For questions and ideas
-- **Discord:** [Coming soon]
+- **Issues:** [github.com/onurpolat05/alba/issues](https://github.com/onurpolat05/alba/issues)
+- **Discussions:** [github.com/onurpolat05/alba/discussions](https://github.com/onurpolat05/alba/discussions)
 
 ---
 
@@ -274,4 +275,4 @@ By contributing, you agree that your contributions will be licensed under the MI
 
 ---
 
-Thank you for making opAgent better! 🚀
+Thank you for making ALBA better!
