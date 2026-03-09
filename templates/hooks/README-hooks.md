@@ -33,28 +33,22 @@ Add to `.claude/settings.json`:
 {
   "hooks": {
     "SessionStart": [
-      { "command": ".claude/hooks/session-start.sh" }
+      {"type": "command", "command": "bash .claude/hooks/session-start.sh"}
     ],
     "Stop": [
-      { "command": ".claude/hooks/memory-check.sh" }
+      {"type": "command", "command": "bash .claude/hooks/memory-check.sh"}
     ],
     "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "command": ".claude/hooks/bash-validator.sh"
-      }
+      {"matcher": "Bash", "type": "command", "command": "bash .claude/hooks/bash-validator.sh"}
     ],
     "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "command": ".claude/hooks/error-logger.sh"
-      }
+      {"matcher": "Bash", "type": "command", "command": "bash .claude/hooks/error-logger.sh"}
     ],
     "UserPromptSubmit": [
-      { "command": ".claude/hooks/agent-suggest.sh" }
+      {"type": "command", "command": "bash .claude/hooks/agent-suggest.sh"}
     ],
     "PreCompact": [
-      { "command": ".claude/hooks/pre-compact.sh" }
+      {"type": "command", "command": "bash .claude/hooks/pre-compact.sh"}
     ]
   }
 }
