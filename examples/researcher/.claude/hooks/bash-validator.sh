@@ -12,7 +12,7 @@
 # Uses jq if available, falls back to grep for JSON parsing.
 
 # Ensure we always output valid JSON, even on unexpected errors
-trap 'echo "{\"decision\": \"allow\"}"; exit 0' ERR
+trap 'echo "{\"decision\": \"block\", \"reason\": \"Validator error - blocked for safety. Review command manually.\"}"; exit 0' ERR
 
 INPUT=$(cat)
 
@@ -50,6 +50,11 @@ BLOCKED_PATTERNS=(
   "DROP TABLE"
   "DELETE FROM.*WHERE 1"
   "format c:"
+  "curl.*|.*bash"
+  "curl.*|.*sh"
+  "wget.*-O-.*|.*sh"
+  "eval \$("
+  "sudo rm -rf"
 )
 
 for PATTERN in "${BLOCKED_PATTERNS[@]}"; do

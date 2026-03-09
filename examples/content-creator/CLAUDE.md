@@ -57,13 +57,13 @@ Read relevant files only when needed. Don't load everything into context.
 
 ---
 
-## Commands
+## Skills
 
-| Command | Description |
-|---------|-------------|
-| `/start` | Begin session, load context, show content priorities |
-| `/end` | End session, save state, create summary |
-| `/status` | Quick status on content pipeline |
+| Skill | Purpose | Context |
+|-------|---------|---------|
+| `/start` | Begin session, load context, show content priorities | inline |
+| `/end` | End session, save state, create summary | inline |
+| `/status` | Quick status on content pipeline | inline |
 | `/research` | Content research and trend analysis | fork |
 | `/weekly-review` | Weekly content performance review | inline |
 

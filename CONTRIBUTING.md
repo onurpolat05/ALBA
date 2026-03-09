@@ -88,7 +88,7 @@ Agent templates under `templates/agents/`. Define reusable agent personas with c
 
 - Fill gaps in documentation
 - Add tutorials and walkthroughs
-- Improve existing guides in `docs/`
+- Improve existing guides in `.claude/docs/`
 
 ---
 

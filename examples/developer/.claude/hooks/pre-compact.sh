@@ -44,7 +44,7 @@ fi
 # Unresolved errors count
 if [ -f "memory/knowledge/errors_raw.log" ]; then
   ERR_COUNT=$(wc -l < "memory/knowledge/errors_raw.log" 2>/dev/null | tr -d ' ')
-  if [ "$ERR_COUNT" -gt 3 ]; then
+  if [ "$ERR_COUNT" -gt 5 ]; then
     echo "Recent errors logged: $ERR_COUNT entries"
   fi
 fi
