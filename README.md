@@ -14,6 +14,10 @@ ALBA transforms Claude Code into a **personal AI agent** that remembers your pri
 
 **10-minute interactive setup. Zero dependencies. Pure markdown.**
 
+<p align="center">
+  <img src="assets/demo.gif" alt="ALBA /setup demo" width="100%">
+</p>
+
 ## The Problem
 
 Every new Claude Code session starts from zero. No memory of yesterday's priorities. No context about your projects. Same mistakes repeated. You re-explain your workflow every time.
