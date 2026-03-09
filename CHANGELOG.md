@@ -13,6 +13,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.0.2] - 2026-03-09
+
+### Fixed
+- README-hooks.md: corrected settings.json format (added `type` field and `bash` prefix)
+- Added missing `quality-gates.md` to all 5 example `.claude/docs/` directories
+
+### Added
+- Multi-language README: Turkish (README.tr.md), German (README.de.md)
+- Language selector in README.md header
+- CHANGELOG.md with SemVer versioning rules
+
 ## [1.0.1] - 2026-03-09
 
 ### Fixed
