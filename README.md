@@ -3,6 +3,10 @@
 </p>
 
 <p align="center">
+  <a href="README.md">English</a> | <a href="README.tr.md">Türkçe</a> | <a href="README.de.md">Deutsch</a>
+</p>
+
+<p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
   <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.71+-purple.svg" alt="Claude Code"></a>
   <a href="https://github.com/onurpolat05/ALBA/stargazers"><img src="https://img.shields.io/github/stars/onurpolat05/ALBA?style=social" alt="Stars"></a>
@@ -116,7 +120,7 @@ claude
 ### Option 2: Direct Clone
 
 ```bash
-git clone https://github.com/onurpolat05/alba.git my-agent
+git clone https://github.com/onurpolat05/ALBA.git my-agent
 cd my-agent
 rm -rf .git && git init
 claude
