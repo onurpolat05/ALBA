@@ -1,12 +1,11 @@
 <p align="center">
-  <h1 align="center">ALBA</h1>
-  <p align="center"><strong>Your routine-driven AI companion</strong> | Built on Claude Code</p>
+  <img src="assets/banner.png" alt="ALBA - Your routine-driven AI companion" width="100%">
 </p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
   <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.71+-purple.svg" alt="Claude Code"></a>
-  <a href="https://github.com/onurpolat05/alba/stargazers"><img src="https://img.shields.io/github/stars/onurpolat05/alba?style=social" alt="Stars"></a>
+  <a href="https://github.com/onurpolat05/ALBA/stargazers"><img src="https://img.shields.io/github/stars/onurpolat05/ALBA?style=social" alt="Stars"></a>
 </p>
 
 ---
