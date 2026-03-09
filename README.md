@@ -273,3 +273,13 @@ MIT License — see [LICENSE](LICENSE)
 *ALBA — Consistent. Independent. Always learning.*
 
 > Named after Abla the cat. *Alba* means "dawn" in Latin — a new beginning for your AI workflow.
+
+## Star History
+
+<a href="https://star-history.com/#onurpolat05/ALBA&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=onurpolat05/ALBA&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=onurpolat05/ALBA&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=onurpolat05/ALBA&type=Date" />
+ </picture>
+</a>
