@@ -2,6 +2,7 @@
 name: setup
 description: Initialize your personal ALBA agent system with interactive setup
 context: inline
+effort: medium
 allowed-tools: [Read, Write, Edit, Glob, Bash, AskUserQuestion]
 ---
 
@@ -87,12 +88,14 @@ Copy hook scripts from `templates/hooks/` to `.claude/hooks/` and make executabl
 **Standard hooks** (adds):
 - `session-start.sh` (SessionStart) - load dashboard on start
 - `memory-check.sh` (Stop) - remind to save state
-- `error-logger.sh` (PostToolUse → Bash) - log error patterns
+- `error-logger.sh` (PostToolUse → Bash + PostToolUseFailure) - log error patterns from any tool
+- `pre-compact.sh` (PreCompact) - preserve context before compaction
 
 **Full hooks** (adds all):
 - All Standard hooks plus:
 - `agent-suggest.sh` (UserPromptSubmit) - suggest skills by keyword
 - `pre-compact.sh` (PreCompact) - preserve context before compaction
+- `post-compact.sh` (PostCompact) - remind to re-load context after compaction
 
 **After copying, run:** `chmod +x .claude/hooks/*.sh`
 
@@ -102,100 +105,102 @@ Copy hook scripts from `templates/hooks/` to `.claude/hooks/` and make executabl
 
 Create `.claude/settings.json` with hook configuration matching selected scope.
 
-**Minimal settings.json:**
+All scopes share the same `permissions` and `env` blocks (Layer 1 security: CC-native permission rules + subprocess credential scrub). Hooks differ by scope.
+
+**Shared permissions + env block (all scopes):**
+```json
+{
+  "permissions": {
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git push --force:*)",
+      "Bash(npm publish:*)",
+      "Write(**/*.env)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Read(.env)",
+      "Write(.env)",
+      "Read(**/.aws/credentials*)",
+      "Read(**/.ssh/id_*)"
+    ]
+  },
+  "env": {
+    "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB": "1"
+  }
+}
+```
+
+**Minimal hooks block** (PreToolUse only):
 ```json
 {
   "hooks": {
     "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "type": "command",
-        "command": "bash .claude/hooks/bash-validator.sh"
-      }
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/bash-validator.sh", "timeout": 5}]}
     ]
   }
 }
 ```
 
-**Standard settings.json:**
+**Standard hooks block** (adds SessionStart, PostToolUse + PostToolUseFailure, Stop, PreCompact):
 ```json
 {
   "hooks": {
     "SessionStart": [
-      {
-        "type": "command",
-        "command": "bash .claude/hooks/session-start.sh"
-      }
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/session-start.sh", "timeout": 10}]}
     ],
     "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "type": "command",
-        "command": "bash .claude/hooks/bash-validator.sh"
-      }
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/bash-validator.sh", "timeout": 5}]}
     ],
     "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "type": "command",
-        "command": "bash .claude/hooks/error-logger.sh"
-      }
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/error-logger.sh", "timeout": 5}]}
+    ],
+    "PostToolUseFailure": [
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/error-logger.sh", "timeout": 5}]}
     ],
     "Stop": [
-      {
-        "type": "command",
-        "command": "bash .claude/hooks/memory-check.sh"
-      }
-    ]
-  }
-}
-```
-
-**Full settings.json:**
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "type": "command",
-        "command": "bash .claude/hooks/session-start.sh"
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "type": "command",
-        "command": "bash .claude/hooks/bash-validator.sh"
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "type": "command",
-        "command": "bash .claude/hooks/error-logger.sh"
-      }
-    ],
-    "Stop": [
-      {
-        "type": "command",
-        "command": "bash .claude/hooks/memory-check.sh"
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "type": "command",
-        "command": "bash .claude/hooks/agent-suggest.sh"
-      }
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/memory-check.sh", "timeout": 5}]}
     ],
     "PreCompact": [
-      {
-        "type": "command",
-        "command": "bash .claude/hooks/pre-compact.sh"
-      }
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/pre-compact.sh", "timeout": 5}]}
     ]
   }
 }
 ```
+
+**Full hooks block** (adds PostCompact, UserPromptSubmit):
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/session-start.sh", "timeout": 10}]}
+    ],
+    "PreToolUse": [
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/bash-validator.sh", "timeout": 5}]}
+    ],
+    "PostToolUse": [
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/error-logger.sh", "timeout": 5}]}
+    ],
+    "PostToolUseFailure": [
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/error-logger.sh", "timeout": 5}]}
+    ],
+    "Stop": [
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/memory-check.sh", "timeout": 5}]}
+    ],
+    "PreCompact": [
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/pre-compact.sh", "timeout": 5}]}
+    ],
+    "PostCompact": [
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/post-compact.sh", "timeout": 5}]}
+    ],
+    "UserPromptSubmit": [
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/agent-suggest.sh", "timeout": 3}]}
+    ]
+  }
+}
+```
+
+**Note:** Merge the shared `permissions` + `env` block with the chosen `hooks` block into a single `settings.json`. See `examples/developer/.claude/settings.json` for the full Standard+ shape.
 
 ### 2e. Rules (scope-based)
 
@@ -264,7 +269,7 @@ Next steps:
 - Use /start to begin each session
 - Use /end to close sessions and save progress
 - Use /extend to add new features anytime
-- Use /loop 30m /status for periodic reminders (Claude Code v2.1.71+)
+- Use /loop 30m /status for periodic reminders (Claude Code v2.1.83+)
 
 Welcome to ALBA!
 ```

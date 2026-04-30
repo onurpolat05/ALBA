@@ -1,0 +1,30 @@
+# ALBA .gitattributes
+# Ensures cross-platform compatibility (Windows + macOS + Linux)
+
+# Default: let git auto-detect text/binary
+* text=auto
+
+# Shell scripts MUST use LF line endings on all platforms.
+# Without this, Windows core.autocrlf=true converts shebang to '#!/bin/bash\r\n'
+# and the kernel fails with "bad interpreter: bash\r: No such file or directory".
+*.sh text eol=lf
+*.sh.template text eol=lf
+*.bash text eol=lf
+
+# Config files where LF is safer
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+
+# Documentation and templates
+*.md text eol=lf
+*.template text eol=lf
+
+# Explicitly mark binary assets so git doesn't try line-ending conversion
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary

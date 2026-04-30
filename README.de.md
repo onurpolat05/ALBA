@@ -8,7 +8,8 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
-  <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.71+-purple.svg" alt="Claude Code"></a>
+  <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.83+-purple.svg" alt="Claude Code minimum"></a>
+  <a href="https://github.com/anthropics/claude-code/releases"><img src="https://img.shields.io/badge/Tested-v2.1.123-green.svg" alt="Getestet mit v2.1.123"></a>
   <a href="https://github.com/onurpolat05/ALBA/stargazers"><img src="https://img.shields.io/github/stars/onurpolat05/ALBA?style=social" alt="Stars"></a>
 </p>
 
@@ -154,7 +155,7 @@ Freitag:
 
 Jederzeit:
   /extend                   # "Ich möchte einen Content-Creation-Skill" → wird erstellt
-  /loop 30m /status         # Periodische Erinnerungen (Claude Code v2.1.71+)
+  /loop 30m /status         # Periodische Erinnerungen (Claude Code v2.1.83+)
 ```
 
 ---
@@ -246,10 +247,35 @@ Oder fragen Sie einfach direkt:
 
 ## Voraussetzungen
 
-- **Claude Code** v2.1.50+ ([Installieren](https://docs.anthropic.com/en/docs/claude-code))
+- **Claude Code** v2.1.83+ Minimum — getestet bis v2.1.123 (neueste Version empfohlen). [Installieren](https://docs.anthropic.com/en/docs/claude-code).
 - **Git**
 
 MCP-Server sind optionale Erweiterungen — ALBA funktioniert vollständig eigenständig.
+
+---
+
+## Windows-Setup
+
+ALBAs Hooks sind Bash-Skripte. Claude Code läuft nativ auf Windows (kein WSL erforderlich) und leitet Bash-Befehle automatisch durch Git Bash — aber Sie brauchen ein paar Voraussetzungen:
+
+```powershell
+# 1. Git for Windows installieren (enthält Git Bash)
+winget install --id Git.Git -e
+
+# 2. jq installieren (von Hooks für JSON-Parsing genutzt)
+winget install --id jqlang.jq -e
+
+# 3. Claude Code installieren
+irm https://claude.ai/install.ps1 | iex
+```
+
+Danach ALBA klonen und im Repo-Wurzelverzeichnis `claude` ausführen — Git Bash erledigt den Rest.
+
+**Warum das funktioniert:** ALBAs `.gitattributes`-Datei erzwingt LF-Zeilenenden für `*.sh`-Dateien und verhindert so den `bad interpreter: bash\r`-Fehler, der unter Windows' standardmäßiger CRLF-Einstellung Bash-Skripte zerstört.
+
+**Alternative:** WSL2 funktioniert ebenfalls (gleiche Installationsschritte innerhalb der Linux-Distribution). Verwenden Sie WSL2, wenn Sie eine vollständige Linux-Toolchain bevorzugen.
+
+**Fehlerbehebung:** Wenn Hooks mit `command not found: jq` fehlschlagen, installieren Sie jq mit dem Befehl oben. Wenn Sie `bad interpreter` sehen, stammt Ihr Klon aus der Zeit vor `.gitattributes` — klonen Sie das Repo erneut.
 
 ---
 

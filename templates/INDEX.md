@@ -51,10 +51,11 @@ These skills are ready to use at `.claude/skills/`:
 |------|-------|-------------|
 | `hooks/session-start.sh.template` | SessionStart | Load dashboard, show priorities |
 | `hooks/bash-validator.sh.template` | PreToolUse (Bash) | Block dangerous commands |
-| `hooks/error-logger.sh.template` | PostToolUse (Bash) | Log error patterns |
+| `hooks/error-logger.sh.template` | PostToolUse + PostToolUseFailure | Log error patterns (any tool, captures `duration_ms`) |
 | `hooks/memory-check.sh.template` | Stop | Remind to save state |
 | `hooks/agent-suggest.sh.template` | UserPromptSubmit | Suggest skills by keyword |
 | `hooks/pre-compact.sh.template` | PreCompact | Preserve context before compaction |
+| `hooks/post-compact.sh.template` | PostCompact | Remind to re-load context after compaction |
 | `hooks/README-hooks.md` | - | Hooks system documentation |
 
 ## Rule Templates
@@ -91,4 +92,4 @@ Skills are already at `.claude/skills/` — no copying needed.
 
 ---
 
-*ALBA v1.0*
+*ALBA v1.1*

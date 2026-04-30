@@ -2,6 +2,7 @@
 name: status
 description: Quick status overview - priorities, tasks, blockers
 context: inline
+effort: low
 allowed-tools: [Read, Glob]
 ---
 

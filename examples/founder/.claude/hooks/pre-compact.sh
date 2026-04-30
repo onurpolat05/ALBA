@@ -7,6 +7,13 @@
 # When Claude's context window fills up, it compacts older messages.
 # This hook outputs key state so it survives in the compacted summary.
 # Keeps output under 20 lines. Cross-platform (macOS + Linux). Never exits 1.
+#
+# Optional: Since CC v2.1.105, this hook can halt the compaction entirely.
+# To do so, write to stderr and exit 2:
+#   echo "block reason" >&2; exit 2
+# Or output JSON:
+#   echo '{"decision":"block","reason":"..."}'; exit 0
+# By default this script just enriches the compaction summary, doesn't block.
 
 echo "=== CRITICAL CONTEXT (preserve across compaction) ==="
 echo ""

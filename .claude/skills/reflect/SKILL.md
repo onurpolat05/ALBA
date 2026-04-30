@@ -2,6 +2,7 @@
 name: reflect
 description: Cross-session pattern analysis - find recurring themes, derive rules
 context: fork
+effort: medium
 allowed-tools: [Read, Write, Glob, Grep]
 ---
 

@@ -148,4 +148,17 @@ Don't load all memory files at once. Claude reads what's needed:
 
 ---
 
+## Limits & Cohabitation with CC Auto-Memory
+
+ALBA memory (`memory/state/`, `memory/knowledge/`, `memory/projects/`, `memory/daily/`) has **no size caps** — files grow as your work grows. Use `/reflect` to consolidate when files get long.
+
+Claude Code's auto-memory system writes to `~/.claude/projects/<encoded-project-path>/memory/MEMORY.md`. Since CC v2.1.83, that index file is **capped at 25KB / 200 lines** — older entries are truncated. ALBA's memory is unaffected by this cap because it lives in your project under `memory/`, not in the auto-memory index.
+
+**Best practice:**
+- Use ALBA memory for narrative content (learnings, errors, project context).
+- Use Claude Code auto-memory for tactical preferences (one-line facts about you, your tools, your style).
+- See [memory-compatibility.md](memory-compatibility.md) for the full coexistence model.
+
+---
+
 Created: [Date]

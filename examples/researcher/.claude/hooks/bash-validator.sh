@@ -5,11 +5,18 @@
 # Matcher: Bash
 # Purpose: Block dangerous bash commands before execution
 #
-# Hook input: JSON on stdin with tool_name and tool_input
-# Hook output: JSON with decision (allow/block)
+# Two-layer security model (v1.1.0+):
+#   Layer 1 (CC native): permissions.deny / permissions.ask in settings.json
+#                        catches command-level rules, including wrapper-bypassed
+#                        commands (env/sudo/watch/ionice/setsid) and
+#                        find -exec/-delete since CC v2.1.113.
+#   Layer 2 (this hook): semantic intent detection for catastrophic patterns
+#                        that command-level rules cannot reason about
+#                        (fork bombs, pipe-to-shell, SQL drops, etc).
 #
 # Cross-platform (macOS + Linux). Never exits 1.
 # Uses jq if available, falls back to grep for JSON parsing.
+# Patterns use [[:space:]]+ instead of literal spaces to close tab-bypass.
 
 # Ensure we always output valid JSON, even on unexpected errors
 trap 'echo "{\"decision\": \"block\", \"reason\": \"Validator error - blocked for safety. Review command manually.\"}"; exit 0' ERR
@@ -33,28 +40,28 @@ if [ -z "$COMMAND" ]; then
   exit 0
 fi
 
-# Dangerous patterns to block
+# Dangerous patterns to block (semantic intent layer)
 BLOCKED_PATTERNS=(
-  "rm -rf /"
-  "rm -rf ~"
-  "rm -rf \.$"
+  "rm[[:space:]]+-rf?[[:space:]]+/"
+  "rm[[:space:]]+-rf?[[:space:]]+~"
+  "rm[[:space:]]+-rf?[[:space:]]+\.$"
   "mkfs\."
-  "dd if="
-  ":(){:|:&};:"
+  "dd[[:space:]]+if="
+  ":\(\)[[:space:]]*\{[[:space:]]*:\|:&[[:space:]]*\}[[:space:]]*;[[:space:]]*:"
   "shutdown"
   "reboot"
   "halt"
-  "> /dev/sda"
-  "chmod -R 777 /"
-  "DROP DATABASE"
-  "DROP TABLE"
-  "DELETE FROM.*WHERE 1"
-  "format c:"
-  "curl.*|.*bash"
-  "curl.*|.*sh"
-  "wget.*-O-.*|.*sh"
-  "eval \$("
-  "sudo rm -rf"
+  ">[[:space:]]*/dev/sd"
+  "chmod[[:space:]]+-R[[:space:]]+0?777[[:space:]]+/"
+  "DROP[[:space:]]+DATABASE"
+  "DROP[[:space:]]+TABLE"
+  "DELETE[[:space:]]+FROM.*WHERE[[:space:]]+1"
+  "format[[:space:]]+c:"
+  "curl.*\|.*bash"
+  "curl.*\|.*sh"
+  "wget.*-O-.*\|.*sh"
+  "eval[[:space:]]+\\\$\("
+  "sudo[[:space:]]+rm[[:space:]]+-rf"
 )
 
 for PATTERN in "${BLOCKED_PATTERNS[@]}"; do

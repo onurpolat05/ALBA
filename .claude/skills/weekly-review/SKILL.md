@@ -2,6 +2,7 @@
 name: weekly-review
 description: Weekly performance review - analyze progress, extract patterns, plan next week
 context: inline
+effort: high
 allowed-tools: [Read, Write, Edit, Glob, Grep, AskUserQuestion]
 ---
 

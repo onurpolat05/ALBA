@@ -2,6 +2,7 @@
 name: start
 description: Begin session - load context and show priorities
 context: inline
+effort: low
 allowed-tools: [Read, Glob]
 ---
 
