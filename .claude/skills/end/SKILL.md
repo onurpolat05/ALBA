@@ -2,6 +2,7 @@
 name: end
 description: End session - save state and create daily log
 context: inline
+effort: medium
 allowed-tools: [Read, Write, Edit, Glob, AskUserQuestion]
 ---
 
@@ -79,3 +80,9 @@ Next: [priority from Q3]
 - Create memory/daily/ directory if it doesn't exist
 - Never fail silently - confirm what was saved
 - Respect user's language (follow dashboard/CLAUDE.md language)
+
+## Note on Auto-Memory vs ALBA Memory
+
+Claude Code's auto-memory system writes to `~/.claude/projects/<encoded-project-path>/memory/MEMORY.md`. Since CC v2.1.83, that index is **capped at 25KB / 200 lines** — entries past that are truncated. Keep auto-memory entries concise (one line, ~150 chars).
+
+ALBA's own `memory/` (state, knowledge, projects, daily) is **separate** — no size cap, but keep entries short for readability. Auto-memory and ALBA memory coexist (see [memory-compatibility.md](../../docs/memory-compatibility.md)).

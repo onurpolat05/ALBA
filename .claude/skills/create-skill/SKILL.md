@@ -2,6 +2,7 @@
 name: create-skill
 description: Create a new skill with proper Skills 2.0 format
 context: inline
+effort: medium
 allowed-tools: [Read, Write, Edit, AskUserQuestion]
 ---
 

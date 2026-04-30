@@ -1,22 +1,46 @@
 {
+  "permissions": {
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git push --force:*)",
+      "Bash(npm publish:*)",
+      "Write(**/*.env)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Read(.env)",
+      "Write(.env)",
+      "Read(**/.aws/credentials*)",
+      "Read(**/.ssh/id_*)"
+    ]
+  },
+  "env": {
+    "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB": "1"
+  },
   "hooks": {
     "SessionStart": [
-      {"type": "command", "command": "bash .claude/hooks/session-start.sh"}
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/session-start.sh", "timeout": 10}]}
     ],
     "PreToolUse": [
-      {"matcher": "Bash", "type": "command", "command": "bash .claude/hooks/bash-validator.sh"}
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/bash-validator.sh", "timeout": 5}]}
     ],
     "PostToolUse": [
-      {"matcher": "Bash", "type": "command", "command": "bash .claude/hooks/error-logger.sh"}
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/error-logger.sh", "timeout": 5}]}
+    ],
+    "PostToolUseFailure": [
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/error-logger.sh", "timeout": 5}]}
     ],
     "Stop": [
-      {"type": "command", "command": "bash .claude/hooks/memory-check.sh"}
-    ],
-    "UserPromptSubmit": [
-      {"type": "command", "command": "bash .claude/hooks/agent-suggest.sh"}
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/memory-check.sh", "timeout": 5}]}
     ],
     "PreCompact": [
-      {"type": "command", "command": "bash .claude/hooks/pre-compact.sh"}
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/pre-compact.sh", "timeout": 5}]}
+    ],
+    "PostCompact": [
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/post-compact.sh", "timeout": 5}]}
+    ],
+    "UserPromptSubmit": [
+      {"hooks": [{"type": "command", "command": "bash .claude/hooks/agent-suggest.sh", "timeout": 3}]}
     ]
   }
 }

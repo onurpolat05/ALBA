@@ -8,7 +8,8 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
-  <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.71+-purple.svg" alt="Claude Code"></a>
+  <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.83+-purple.svg" alt="Claude Code minimum"></a>
+  <a href="https://github.com/anthropics/claude-code/releases"><img src="https://img.shields.io/badge/Tested-v2.1.123-green.svg" alt="Getestet mit v2.1.123"></a>
   <a href="https://github.com/onurpolat05/ALBA/stargazers"><img src="https://img.shields.io/github/stars/onurpolat05/ALBA?style=social" alt="Stars"></a>
 </p>
 
@@ -154,7 +155,7 @@ Freitag:
 
 Jederzeit:
   /extend                   # "Ich möchte einen Content-Creation-Skill" → wird erstellt
-  /loop 30m /status         # Periodische Erinnerungen (Claude Code v2.1.71+)
+  /loop 30m /status         # Periodische Erinnerungen (Claude Code v2.1.83+)
 ```
 
 ---
@@ -246,7 +247,7 @@ Oder fragen Sie einfach direkt:
 
 ## Voraussetzungen
 
-- **Claude Code** v2.1.50+ ([Installieren](https://docs.anthropic.com/en/docs/claude-code))
+- **Claude Code** v2.1.83+ Minimum — getestet bis v2.1.123 (neueste Version empfohlen). [Installieren](https://docs.anthropic.com/en/docs/claude-code).
 - **Git**
 
 MCP-Server sind optionale Erweiterungen — ALBA funktioniert vollständig eigenständig.

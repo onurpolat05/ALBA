@@ -2,16 +2,32 @@
 
 Hooks are shell scripts that run automatically at specific Claude Code events.
 
+## Two-Layer Security Model (v1.1.0+)
+
+ALBA uses defense-in-depth for dangerous-command protection:
+
+**Layer 1 — CC-native permissions** (in `settings.json`)
+- `permissions.deny`: hard blocks (e.g., `Bash(sudo:*)`, `Read(.env)`)
+- `permissions.ask`: prompt before run (e.g., `Bash(git push:*)`)
+- Since CC v2.1.113, deny rules automatically match commands wrapped in `env`/`sudo`/`watch`/`ionice`/`setsid`, and `find:*` no longer auto-approves `-exec`/`-delete` under broad allow rules.
+
+**Layer 2 — `bash-validator.sh`** (this hook directory)
+- Detects catastrophic semantic intent that command-level rules can't see (fork bombs, disk wipes, pipe-to-shell, `DROP DATABASE`, etc.)
+- Runs as PreToolUse(Bash) and returns `{decision: block}` to halt execution.
+
+Together, the two layers catch both syntactic and semantic dangerous-command patterns. Customize Layer 1 for your workflow; Layer 2 is intentionally minimal and rarely needs editing.
+
 ## Included Hooks
 
 | Hook | Event | Matcher | Purpose |
 |------|-------|---------|---------|
 | `session-start.sh` | SessionStart | - | Load dashboard, show priorities |
 | `memory-check.sh` | Stop | - | Remind to save state |
-| `bash-validator.sh` | PreToolUse | Bash | Block dangerous commands |
-| `error-logger.sh` | PostToolUse | Bash | Log errors to errors.md |
+| `bash-validator.sh` | PreToolUse | Bash | Block dangerous commands (semantic intent) |
+| `error-logger.sh` | PostToolUse + PostToolUseFailure | Bash on PostToolUse | Log errors (any tool, captures `duration_ms`) |
 | `agent-suggest.sh` | UserPromptSubmit | - | Suggest agents by keyword |
 | `pre-compact.sh` | PreCompact | - | Preserve context before compaction |
+| `post-compact.sh` | PostCompact | - | Remind to re-load context after compaction |
 
 ## Setup
 
