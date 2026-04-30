@@ -16,6 +16,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [1.1.0] - 2026-04-30
 
 ### Added
+- **Windows compatibility**: new `.gitattributes` forces `*.sh` / `*.sh.template` files to LF line endings on all platforms — closes the `bad interpreter: bash\r` failure that broke all 7 hooks under Windows' default `core.autocrlf=true`. New "Windows Setup" section in README (en/tr/de) covers Git for Windows + jq prerequisites; `templates/hooks/README-hooks.md` documents the bash/jq requirements and WSL2 alternative. ALBA now works on Windows native Claude Code (via Git Bash routing) without WSL.
 - **`effort` frontmatter on 8 of 9 built-in skills**: `/start` and `/status` → `low`; `/end`, `/extend`, `/reflect`, `/setup`, `/create-skill` → `medium`; `/weekly-review` → `high`. Pro/Max users on Opus 4.6 / Sonnet 4.6 default to `high` effort since CC v2.1.117 — explicit per-skill effort cuts ~3-5x token cost on lightweight skills. (`/research` deliberately left without static effort so the user's `/effort` slider applies.)
 - **Two-layer security model** for dangerous-command protection:
   - Layer 1 (CC native): `permissions.deny` and `permissions.ask` blocks in `settings.json` — picks up CC v2.1.113's wrapper-match (catches `env FOO=bar rm`, `sudo rm`, `find -delete` automatically) and v2.1.121's permission-prompt skip for skill/agent/command writes.

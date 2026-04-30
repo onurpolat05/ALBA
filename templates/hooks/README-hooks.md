@@ -95,3 +95,15 @@ Each hook is a standalone bash script. Customize by:
 2. **Fail gracefully** - use `|| true` for non-critical operations
 3. **Silent success** - only output when there's something useful to show
 4. **Test manually** - run scripts directly before adding to settings.json
+
+## Windows Compatibility
+
+Claude Code runs natively on Windows and routes bash commands through **Git Bash** (provided by Git for Windows). ALBA's hooks therefore work on Windows without WSL — provided three things hold:
+
+1. **Git for Windows is installed** — gives you Git Bash, the bash interpreter CC routes commands through. Install: `winget install --id Git.Git -e`.
+2. **`jq` is on PATH** — every hook uses `jq` to parse the JSON event payload (with a grep fallback, but jq is much more reliable). Install: `winget install --id jqlang.jq -e`.
+3. **Repo is cloned with LF line endings** — ALBA's `.gitattributes` forces `*.sh` files to LF on all platforms, so a fresh clone works. If you see `bad interpreter: bash\r`, your clone predates `.gitattributes` (re-clone) or someone edited a script with a CRLF editor (run `dos2unix` or `sed -i 's/\r$//'`).
+
+**settings.json portability:** ALBA always uses `"command": "bash .claude/hooks/script.sh"` (explicit `bash` prefix + forward-slash path). This works identically on macOS, Linux, and Windows Git Bash — no executable bit required, no path rewriting needed.
+
+**WSL2 alternative:** if you prefer a full Linux toolchain, install Claude Code inside your WSL2 distro and clone ALBA there. Same hooks, same setup — Git Bash and WSL2 both satisfy the bash + jq requirement.

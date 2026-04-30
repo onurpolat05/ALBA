@@ -254,6 +254,31 @@ MCP sunuculari opsiyonel iyilestirmelerdir — ALBA tamamen bagimsiz calisir.
 
 ---
 
+## Windows Kurulumu
+
+ALBA'nin hook'lari bash script'leridir. Claude Code Windows'da native calisir (WSL gerekmez) ve bash komutlarini otomatik olarak Git Bash uzerinden calistirir — fakat birkac on kosul gerekli:
+
+```powershell
+# 1. Git for Windows kur (Git Bash icerir)
+winget install --id Git.Git -e
+
+# 2. jq kur (hook'lar JSON parse etmek icin kullanir)
+winget install --id jqlang.jq -e
+
+# 3. Claude Code kur
+irm https://claude.ai/install.ps1 | iex
+```
+
+Sonrasinda ALBA'yi klonla ve repo kokunden `claude` komutunu calistir — gerisini Git Bash halleder.
+
+**Neden calisir:** ALBA'nin `.gitattributes` dosyasi `*.sh` dosyalarini LF satir sonu ile zorlar; Windows'un default CRLF ayarinin yol actigi `bad interpreter: bash\r` hatasi onlenir.
+
+**Alternatif:** WSL2 de calisir (ayni kurulum adimlari Linux distrosu icinde). Tam Linux toolchain'i tercih ediyorsan WSL2 kullan.
+
+**Sorun giderme:** hook `command not found: jq` ile fail olursa yukaridaki komutla jq kur. `bad interpreter` hatasi gorursen clone'un `.gitattributes`'tan once yapilmis demektir — repo'yu yeniden klonla.
+
+---
+
 ## Katki
 
 Katkilarinizi bekliyoruz! [CONTRIBUTING.md](CONTRIBUTING.md) dosyasina goz atin.

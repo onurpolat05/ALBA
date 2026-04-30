@@ -254,6 +254,31 @@ MCP servers are optional enhancements — ALBA works fully standalone.
 
 ---
 
+## Windows Setup
+
+ALBA's hooks are bash scripts. Claude Code runs natively on Windows (no WSL required) and routes bash commands through Git Bash automatically — but you need a couple of prerequisites:
+
+```powershell
+# 1. Install Git for Windows (provides Git Bash)
+winget install --id Git.Git -e
+
+# 2. Install jq (used by hooks for JSON parsing)
+winget install --id jqlang.jq -e
+
+# 3. Install Claude Code
+irm https://claude.ai/install.ps1 | iex
+```
+
+Then clone ALBA and run `claude` from the repo root — Git Bash handles the rest.
+
+**Why this works:** ALBA's `.gitattributes` forces `*.sh` files to LF line endings, preventing the `bad interpreter: bash\r` error that breaks bash scripts under Windows' default CRLF setting.
+
+**Alternative:** WSL2 also works (same install steps inside the Linux distro). Use WSL2 if you prefer a full Linux toolchain.
+
+**Troubleshooting:** if hooks fail with `command not found: jq`, install jq with the command above. If you see `bad interpreter`, your clone predates `.gitattributes` — re-clone the repo.
+
+---
+
 ## Contributing
 
 Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
