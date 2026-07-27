@@ -52,6 +52,24 @@ Security guidelines for safe operation. This file auto-loads from `.claude/rules
 
 ---
 
+## Hooks Are a Security Boundary
+
+A `PreToolUse` hook decides whether a tool call reaches the permission prompt. That makes its return value a security decision, not a formality.
+
+| `hookSpecificOutput.permissionDecision` | Effect |
+|---|---|
+| `"allow"` | **Skips the permission prompt.** The user is never asked. |
+| `"deny"` | Blocks the call; the reason is shown to Claude. |
+| `"ask"` | Prompts the user for confirmation. |
+
+The trap: writing a validator that checks a blocklist and returns `"allow"` for everything else. That does not "let the command through to normal handling" — it **auto-approves every command the blocklist happens to miss**, and a blocklist always misses things. A hook meant to add safety ends up removing the prompt you already had.
+
+**The correct way to say "no opinion" is to produce no output and `exit 0`.** Normal permission flow then applies, `permissions.deny` and `permissions.ask` still evaluate, and the user still gets asked. To block, either `exit 2` with a message on stderr, or return `permissionDecision: "deny"` with a reason.
+
+Only return `"allow"` for a call you would be comfortable auto-approving forever, unattended.
+
+---
+
 ## Dependency Safety
 
 - Before adding a new dependency, check for known vulnerabilities

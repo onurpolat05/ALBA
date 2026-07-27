@@ -68,14 +68,20 @@ Detailed preferences: `memory/knowledge/preferences.md`
 
 ## Hooks
 
+Automated responses to Claude Code events. Wired in `.claude/settings.json`, scripts in `.claude/hooks/`.
+
 | Event | Script | Purpose |
 |-------|--------|---------|
-| SessionStart | `session-start.sh` | Load dashboard, highlight deadlines |
-| PreToolUse | `bash-validator.sh` | Block dangerous commands |
-| PostToolUse | `error-logger.sh` | Log error patterns |
-| Stop | `memory-check.sh` | Remind to save state |
-| UserPromptSubmit | `agent-suggest.sh` | Suggest relevant skills |
-| PreCompact | `pre-compact.sh` | Preserve critical context |
+| `SessionStart` | `session-start.sh` | Load dashboard, show priorities |
+| `UserPromptSubmit` | `agent-suggest.sh` | Suggest a relevant skill |
+| `PreToolUse` | `bash-validator.sh` | Deny destructive commands |
+| `PostToolUse` | `error-logger.sh` | Log Bash failures |
+| `PostToolUseFailure` | `error-logger.sh` | Log Edit/Write/MCP failures |
+| `Stop` | `memory-check.sh` | Remind to save state (rate-limited) |
+| `SessionEnd` | `session-end.sh` | Trace the session in today's log |
+| `PreCompact` / `PostCompact` | `pre-compact.sh`, `post-compact.sh` | Carry priorities through compaction |
+
+Eight scripts, nine registrations - `error-logger.sh` is wired to both failure events.
 
 ---
 

@@ -1,41 +1,56 @@
 # Behavioral Rules
 
+Auto-loads from `.claude/rules/`. **This file is the authority on when to ask and when to act** — it is in context at the moment a decision is made, which a doc you would have to open is not. `.claude/docs/decision-protocol.md` holds worked examples and phrasing; it never overrides this file.
+
+---
+
 ## Decision Protocol
 
-### Act Autonomously
-- Fix typos, minor formatting
-- Update memory files (errors.md, learnings.md, daily logs)
-- Read files for context
-- Run non-destructive commands (tests, linting, git status)
+### Act — no permission needed
+- Read any file; search the codebase; gather information
+- Run non-destructive commands (tests, linters, type checks, `git status`, `git log`)
+- Append to `memory/knowledge/errors.md` and `memory/knowledge/learnings.md`
+- Update `memory/state/dashboard.md`, write `memory/daily/YYYY-MM-DD.md`
+- Analysis, review, diagnosis, recommendations
 
-### Ask Before Acting
-- Create or delete files/folders
-- Modify CLAUDE.md or system docs
-- Run destructive commands (rm, reset, force-push)
-- Make architectural decisions
-- Install/remove dependencies
-- Push code or create PRs
+### Ask first
+- Create or delete any file or folder outside `memory/`
+- Modify `CLAUDE.md`, `.claude/rules/`, `.claude/settings.json`, or `.claude/docs/`
+- Destructive commands: `rm -rf`, `git reset --hard`, force push, dropping data
+- Anything that leaves the machine: sending mail, posting, calling a state-changing API
+- Architectural decisions, dependency changes, bulk operations across many files
 
-### When Uncertain
-- Default to asking
-- Suggest a recommendation but let user decide
+### When genuinely uncertain
+State the assumption you would proceed under, and proceed — unless being wrong would be unsafe or would waste the work. Reserve blocking questions for that case. Asking about everything is its own failure mode.
 
-## Communication Style
+Approval for one action does not carry to the next one like it.
 
-- **Language:** English, technical terms OK
-- **Tone:** Direct and concise - CLI environment
-- **Format:** Tables and lists over prose
-- **Uncertainty:** Never guess - ask or say "I don't know"
-- **Emoji:** Don't use
+---
 
-## Self-Improvement Protocol
+## Communication
 
-### Auto-Record
-- Error solved -> append to `memory/knowledge/errors.md`
-- New insight -> append to `memory/knowledge/learnings.md`
-- Session end -> create `memory/daily/YYYY-MM-DD.md`
+- **Language:** [primary language] · **Tone:** [concise / detailed]
+- Prefer tables and lists over prose. This is a terminal; respect the space.
+- Never guess. Give a fact or say you don't know.
+- Match explanation depth to the user's technical level.
+- **Emoji:** [yes / no]
 
-### Pattern Recognition
-- Same error 2+ times -> suggest a prevention rule
-- Repeated workflow 3+ times -> suggest a skill
-- User correction -> update preferences immediately
+---
+
+## Self-Improvement
+
+### Record automatically
+- **Error solved** → `memory/knowledge/errors.md`: message, root cause, fix, prevention
+- **New insight** → `memory/knowledge/learnings.md`: what, context, when it applies
+- **Session end** → `memory/daily/YYYY-MM-DD.md`: done, decided, blocked, next
+
+Record only what is reusable. A one-off detail that matters solely to the current conversation is noise in a file that is read for months.
+
+### Patterns
+- Same error twice → propose a rule that prevents it
+- Same workflow three times → propose a skill for it
+- User corrects you → update `memory/knowledge/preferences.md` immediately
+
+### Before and after
+- Starting a task: check `errors.md` for a known pitfall
+- Finishing: record the insight, then state what you verified (`verification.md`)

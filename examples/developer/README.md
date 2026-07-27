@@ -38,8 +38,8 @@ developer/
 ## Key Features
 
 ### 1. ALBA Template Format (CLAUDE.md)
-- Skills 2.0 with frontmatter format (`name`, `description`, `context`, `allowed-tools`)
-- Hooks table (6 automated event handlers)
+- Skill frontmatter (`name`, `description`, `context`, `background`, `effort`, `allowed-tools`)
+- Hooks table (8 event handlers, 9 registrations)
 - Rules auto-loaded from `.claude/rules/`
 - Progressive disclosure for efficient context loading
 - Three-tier memory system (hot/warm/cold)
@@ -77,16 +77,19 @@ Automated scripts that respond to Claude Code events:
 | PreCompact | Preserve critical context |
 
 ### 5. Memory System
-- `state/dashboard.md` - Current priorities, active projects, deadlines
-- `state/todo.md` - Weekly task breakdown
-- `knowledge/preferences.md` - Communication and work style preferences
-- `knowledge/learnings.md` - Auto-updated knowledge base
-- `knowledge/errors.md` - Auto-updated error solutions
+- `memory/state/dashboard.md` - Current priorities, active projects, deadlines
+- `memory/state/todo.md` - Weekly task breakdown
+- `memory/knowledge/preferences.md` - Communication and work style preferences
+- `memory/knowledge/learnings.md` - Auto-updated knowledge base
+- `memory/knowledge/errors.md` - Auto-updated error solutions
 
 ### 6. Docs (`.claude/docs/`)
 Reference documents loaded on-demand via progressive disclosure:
 - `memory-system.md` - How the memory system works
 - `decision-protocol.md` - When to ask vs. act autonomously
+- `quality-gates.md` - Confidence thresholds before acting
+- `loop-integration.md` - Scheduling periodic tasks with `/loop`
+- `memory-compatibility.md` - Living alongside Claude Code's own auto-memory
 
 ## How to Use This Example
 

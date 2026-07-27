@@ -1,95 +1,105 @@
 # ALBA Template Index
 
-Reference for all template files used during `/setup`.
+Every template file, what it becomes, and where it lands. `/setup` reads from here; you can also copy any of it by hand.
 
-## Claude Templates
+`templates/` is the single source of truth. The trees under `examples/` are generated from it — read them to see a finished setup, but don't edit them.
 
-| File | Description |
-|------|-------------|
-| `claude/CLAUDE.md.template` | Main agent instruction file (< 200 lines) |
-| `claude/memory-system.md.template` | Memory system documentation |
-| `claude/decision-protocol.md.template` | Decision-making protocol |
-| `claude/quality-gates.md.template` | Confidence scoring for plans and research |
+## `templates/claude/` → `.claude/docs/` and `CLAUDE.md`
 
-## Memory Templates
+| Template | Becomes | Holds |
+|---|---|---|
+| `CLAUDE.md.template` | `CLAUDE.md` (project root) | Identity, what loads when, read triggers, hook inventory. Keep under 100 lines |
+| `memory-system.md.template` | `.claude/docs/memory-system.md` | Memory layout, flowing vs. permanent, data policy |
+| `decision-protocol.md.template` | `.claude/docs/decision-protocol.md` | Worked examples of asking vs. acting |
+| `quality-gates.md.template` | `.claude/docs/quality-gates.md` | Confidence scoring for plans and research |
+| `loop-integration.md.template` | `.claude/docs/loop-integration.md` | `/loop` for recurring checks |
+| `memory-compatibility.md.template` | `.claude/docs/memory-compatibility.md` | ALBA memory alongside Claude Code auto-memory |
 
-| File | Description |
-|------|-------------|
-| `memory/dashboard.md.template` | Priorities, active projects, deadlines |
-| `memory/todo.md.template` | Active tasks and goals |
-| `memory/learnings.md.template` | Accumulated insights (auto-updated) |
-| `memory/preferences.md.template` | User preferences and communication style |
-| `memory/daily-log.md.template` | Daily session summary format |
+## `templates/rules/` → `.claude/rules/`
 
-## Skills (Pre-built)
+Rule files load **unconditionally, every session**. Copy them as-is (no `.template` suffix) and keep each one short — every line costs context on every turn.
 
-These skills are ready to use at `.claude/skills/`:
+| File | Holds |
+|---|---|
+| `behavioral.md` | **Canonical** decision protocol, communication style, self-improvement |
+| `security.md` | Secrets, safe commands, input validation, prompt injection, the hook security boundary |
+| `verification.md` | What to report after a change: verified vs. not verified |
 
-| Skill | File | Description |
-|-------|------|-------------|
-| `/start` | `.claude/skills/start/SKILL.md` | Begin session, load context |
-| `/end` | `.claude/skills/end/SKILL.md` | End session, save state |
-| `/status` | `.claude/skills/status/SKILL.md` | Quick status overview |
-| `/research` | `.claude/skills/research/SKILL.md` | Web research (fork) |
-| `/weekly-review` | `.claude/skills/weekly-review/SKILL.md` | Weekly performance review |
-| `/setup` | `.claude/skills/setup/SKILL.md` | Interactive first-time setup |
-| `/extend` | `.claude/skills/extend/SKILL.md` | Add features post-setup |
-| `/reflect` | `.claude/skills/reflect/SKILL.md` | Cross-session pattern analysis |
-| `/create-skill` | `.claude/skills/create-skill/SKILL.md` | Skill creation wizard |
+## `templates/agents/` → `.claude/agents/`
 
-## Skill Reference Guides
+Custom subagents. Copy as-is; Claude Code discovers them by filename and reads their `description` to decide when to invoke.
 
-| File | Description |
-|------|-------------|
-| `skills/SKILL-TEMPLATE.md` | Generic skill template (for creating new skills) |
-| `skills/research-skill-example.md` | Research skill reference guide |
-| `skills/task-automation-example.md` | Task automation skill example |
+| File | Purpose |
+|---|---|
+| `planner.md` | Breaks a multi-step goal into ordered steps with dependencies, sizes and risks |
 
-## Hook Templates
+Research has no agent file on purpose — the `/research` skill already runs forked in a subagent, and shipping both would be two doors to one room.
 
-| File | Event | Description |
-|------|-------|-------------|
-| `hooks/session-start.sh.template` | SessionStart | Load dashboard, show priorities |
-| `hooks/bash-validator.sh.template` | PreToolUse (Bash) | Block dangerous commands |
-| `hooks/error-logger.sh.template` | PostToolUse + PostToolUseFailure | Log error patterns (any tool, captures `duration_ms`) |
-| `hooks/memory-check.sh.template` | Stop | Remind to save state |
-| `hooks/agent-suggest.sh.template` | UserPromptSubmit | Suggest skills by keyword |
-| `hooks/pre-compact.sh.template` | PreCompact | Preserve context before compaction |
-| `hooks/post-compact.sh.template` | PostCompact | Remind to re-load context after compaction |
-| `hooks/README-hooks.md` | - | Hooks system documentation |
+## `templates/memory/` → `memory/`
 
-## Rule Templates
+| Template | Becomes |
+|---|---|
+| `dashboard.md.template` | `memory/state/dashboard.md` |
+| `todo.md.template` | `memory/state/todo.md` |
+| `learnings.md.template` | `memory/knowledge/learnings.md` |
+| `preferences.md.template` | `memory/knowledge/preferences.md` |
+| `daily-log.md.template` | `memory/daily/YYYY-MM-DD.md` (shape reference; Claude writes these) |
 
-| File | Description |
-|------|-------------|
-| `rules/behavioral.md` | Decision protocol, communication, self-improvement |
-| `rules/security.md` | Input validation, secrets, safe commands |
+`memory/knowledge/errors.md` has no template — `/setup` creates it with a header, and Claude fills it as errors get solved.
 
-## Reference Docs
+## `templates/hooks/` → `.claude/hooks/`
 
-Generated by `/setup` into `.claude/docs/`:
+| Template | Event |
+|---|---|
+| `session-start.sh.template` | SessionStart |
+| `session-end.sh.template` | SessionEnd |
+| `bash-validator.sh.template` | PreToolUse (matcher: `Bash`) |
+| `error-logger.sh.template` | PostToolUse (matcher: `Bash`) + PostToolUseFailure |
+| `memory-check.sh.template` | Stop |
+| `pre-compact.sh.template` | PreCompact |
+| `post-compact.sh.template` | PostCompact |
+| `agent-suggest.sh.template` | UserPromptSubmit |
+| `README-hooks.md` | Reference — the stdin/stdout contract, wiring, and how to test a hook |
 
-| File | Description |
-|------|-------------|
-| `memory-system.md` | How the 3-tier memory works |
-| `decision-protocol.md` | When to ask vs act autonomously |
-| `quality-gates.md` | Confidence scoring for plans |
-| `loop-integration.md` | Using /loop for periodic monitoring |
-| `memory-compatibility.md` | ALBA memory + Claude auto-memory coexistence |
+Hooks do nothing until they are wired into `.claude/settings.json`. A misconfigured hook fails **silently**. See `README-hooks.md`.
 
-## Usage
+## `templates/skills/` — reference, not generated output
 
-Templates are used by `/setup` to create personalized files. They can also be used manually:
+| File | Purpose |
+|---|---|
+| `SKILL-TEMPLATE.md` | Frontmatter and structure for a new skill |
+| `research-skill-example.md` | A forked skill, annotated |
+| `task-automation-example.md` | An automation skill, annotated |
+
+The working skills already sit at `.claude/skills/` and need no copying: `/start` · `/end` · `/status` · `/setup` · `/extend` · `/reflect` · `/research` · `/weekly-review` · `/create-skill`.
+
+## Which Settings File
+
+Two files, and putting a value in the wrong one either leaks a secret or fails to share a fix.
+
+| | `.claude/settings.json` | `.claude/settings.local.json` |
+|---|---|---|
+| Git | **Committed** — shared with everyone who clones | **Ignored** — never committed |
+| Holds | Hook wiring, `permissions.ask` / `permissions.deny`, `env`, model and output-style defaults | Personal permission grants, MCP server entries, machine-specific paths, anything with a credential in it |
+| Test | Would a teammate cloning this repo want it? | Is it about *your* machine, *your* accounts, *your* tolerance for prompts? |
+
+Local settings take precedence over shared ones. Confirm `.claude/settings.local.json` is in `.gitignore` before you put anything in it — MCP entries in particular tend to carry tokens.
+
+## Manual Install
 
 ```bash
-# Copy hook scripts
+# hooks
 cp templates/hooks/*.template .claude/hooks/
 cd .claude/hooks && for f in *.template; do mv "$f" "${f%.template}"; done
 chmod +x .claude/hooks/*.sh
+
+# rules and agents copy as-is, no rename
+cp templates/rules/*.md .claude/rules/
+mkdir -p .claude/agents && cp templates/agents/*.md .claude/agents/
 ```
 
-Skills are already at `.claude/skills/` — no copying needed.
+Then wire the hooks into `.claude/settings.json` and verify it parses:
 
----
-
-*ALBA v1.1*
+```bash
+python3 -m json.tool < .claude/settings.json > /dev/null && echo "settings.json OK"
+```

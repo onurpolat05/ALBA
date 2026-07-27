@@ -1,6 +1,6 @@
 ---
 name: weekly-review
-description: Weekly performance review - analyze progress, extract patterns, plan next week
+description: Weekly retrospective - gathers this week's daily logs, learnings and errors, asks 3 questions, saves memory/state/weekly-reviews/YYYY-Www.md and refreshes the dashboard priorities. Use when user says "weekly review", "review my week", "how did this week go", "plan next week", "wrap up the week", or it is the end of the work week. Do NOT use to close a single day (use /end) or for open-ended multi-week pattern mining with no fixed window (use /reflect).
 context: inline
 effort: high
 allowed-tools: [Read, Write, Edit, Glob, Grep, AskUserQuestion]

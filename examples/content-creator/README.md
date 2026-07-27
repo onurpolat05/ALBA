@@ -42,7 +42,7 @@ content-creator/
 - Research and writing support (not ghostwriting)
 - Content calendar awareness
 - Multi-platform tone management
-- All 6 hooks listed for full lifecycle support
+- All 8 hooks listed for full lifecycle support
 
 ### 2. Content Calendar Dashboard
 - `dashboard.md` serves as a living content calendar

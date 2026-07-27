@@ -1,14 +1,21 @@
 ---
 name: setup
-description: Initialize your personal ALBA agent system with interactive setup
+description: One-time bootstrap of a personal ALBA agent system - asks 7 discovery questions, then generates CLAUDE.md, the memory tree, skills, hooks, rules and .claude/settings.json. Use when the user explicitly types /setup, has just cloned ALBA, and has no CLAUDE.md yet. Do NOT use to add a single skill, hook or rule to a working setup (use /extend), and never run it against an already-configured system - it rewrites CLAUDE.md, settings.json and the memory files.
 context: inline
 effort: medium
+disable-model-invocation: true
 allowed-tools: [Read, Write, Edit, Glob, Bash, AskUserQuestion]
 ---
 
 # ALBA Interactive Setup
 
 Create a personalized AI agent system through collaborative discovery. Ask, don't assume.
+
+> **Why `disable-model-invocation: true`:** this skill overwrites `CLAUDE.md`, `.claude/settings.json`
+> and the whole `memory/` tree. Nothing here should ever fire because a prompt sounded vaguely like
+> "help me get set up". The flag restricts it to an explicit `/setup` from the user, and it also
+> keeps the skill out of scheduled-task triggers and out of subagent preloading — both places where
+> an accidental run would be invisible until the damage was done.
 
 ## Phase 1: Discovery (ask ONE question at a time)
 
@@ -55,32 +62,47 @@ memory/
 
 .claude/
 ├── docs/
-│   ├── memory-system.md      # from templates/claude/memory-system.md.template
-│   ├── decision-protocol.md  # from templates/claude/decision-protocol.md.template
-│   └── quality-gates.md      # from templates/claude/quality-gates.md.template
-└── rules/                    # rules auto-load from here
+│   ├── memory-system.md        # from templates/claude/memory-system.md.template
+│   ├── decision-protocol.md    # from templates/claude/decision-protocol.md.template
+│   ├── quality-gates.md        # from templates/claude/quality-gates.md.template
+│   ├── memory-compatibility.md # from templates/claude/memory-compatibility.md.template
+│   └── loop-integration.md     # from templates/claude/loop-integration.md.template
+├── agents/
+│   └── planner.md              # from templates/agents/planner.md
+└── rules/                      # rules auto-load from here (see 2e)
 ```
+
+One doc per `*.md.template` in `templates/claude/` (excluding `CLAUDE.md.template`, which is
+handled in Phase 3). Generate every one of them, and never list a doc in CLAUDE.md that has no
+template behind it — `/end` links to `memory-compatibility.md`, so a setup that skips it leaves a
+dead link in a skill the user runs daily. The same applies to `planner.md`: the "Plans (Planner
+Agent)" section of `quality-gates.md` assumes that agent exists.
+
+**Naming:** files under `templates/claude/` and `templates/memory/` carry a `.template` suffix that
+gets dropped on copy. Files under `templates/agents/` and `templates/rules/` do not — copy those
+as-is, no rename.
 
 ### 2b. Skills (scope-based)
 
-**Always included** (core workflow):
-- `/start` - already at `.claude/skills/start/SKILL.md`
-- `/end` - already at `.claude/skills/end/SKILL.md`
-- `/status` - already at `.claude/skills/status/SKILL.md`
-- `/extend` - already at `.claude/skills/extend/SKILL.md`
-- `/reflect` - already at `.claude/skills/reflect/SKILL.md`
+All nine skills already ship in `.claude/skills/`. Scope decides which ones get listed in the
+generated CLAUDE.md Skills table — the rest stay on disk and can be surfaced later with `/extend`.
 
-**Standard adds:**
-- `/research` - already at `.claude/skills/research/SKILL.md`
-- `/weekly-review` - already at `.claude/skills/weekly-review/SKILL.md`
+**Minimal** (core loop): `/start`, `/end`, `/status`, `/extend`
 
-**Full adds:** all of the above + show what's available and let user pick more.
+**Standard adds:** `/research`, `/reflect`, `/weekly-review`, `/create-skill`
 
-If user selected "Minimal" - note: "Core skills (/start, /end, /status) are ready. Use /extend anytime to add /research, /weekly-review, or custom skills."
+**Full adds:** everything above, plus walk the user through the remaining skills and any
+custom ones they describe.
+
+`/setup` itself is always present but is not listed as a day-to-day skill — it is a one-time
+bootstrap.
+
+If user selected "Minimal" - note: "Core skills (/start, /end, /status, /extend) are ready. Use /extend anytime to add /research, /reflect, /weekly-review, or custom skills."
 
 ### 2c. Hooks (scope-based)
 
-Copy hook scripts from `templates/hooks/` to `.claude/hooks/` and make executable.
+Copy hook scripts from `templates/hooks/` to `.claude/hooks/`, dropping the `.template` suffix
+(`bash-validator.sh.template` → `bash-validator.sh`), then make them executable.
 
 **Minimal hooks** (always):
 - `bash-validator.sh` (PreToolUse → Bash) - blocks dangerous commands
@@ -91,10 +113,8 @@ Copy hook scripts from `templates/hooks/` to `.claude/hooks/` and make executabl
 - `error-logger.sh` (PostToolUse → Bash + PostToolUseFailure) - log error patterns from any tool
 - `pre-compact.sh` (PreCompact) - preserve context before compaction
 
-**Full hooks** (adds all):
-- All Standard hooks plus:
+**Full hooks** (Standard plus):
 - `agent-suggest.sh` (UserPromptSubmit) - suggest skills by keyword
-- `pre-compact.sh` (PreCompact) - preserve context before compaction
 - `post-compact.sh` (PostCompact) - remind to re-load context after compaction
 
 **After copying, run:** `chmod +x .claude/hooks/*.sh`
@@ -136,7 +156,7 @@ All scopes share the same `permissions` and `env` blocks (Layer 1 security: CC-n
 {
   "hooks": {
     "PreToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/bash-validator.sh", "timeout": 5}]}
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/bash-validator.sh", "timeout": 5}]}
     ]
   }
 }
@@ -147,22 +167,22 @@ All scopes share the same `permissions` and `env` blocks (Layer 1 security: CC-n
 {
   "hooks": {
     "SessionStart": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/session-start.sh", "timeout": 10}]}
+      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.sh", "timeout": 10}]}
     ],
     "PreToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/bash-validator.sh", "timeout": 5}]}
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/bash-validator.sh", "timeout": 5}]}
     ],
     "PostToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/error-logger.sh", "timeout": 5}]}
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/error-logger.sh", "timeout": 5}]}
     ],
     "PostToolUseFailure": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/error-logger.sh", "timeout": 5}]}
+      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/error-logger.sh", "timeout": 5}]}
     ],
     "Stop": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/memory-check.sh", "timeout": 5}]}
+      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/memory-check.sh", "timeout": 5}]}
     ],
     "PreCompact": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/pre-compact.sh", "timeout": 5}]}
+      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/pre-compact.sh", "timeout": 5}]}
     ]
   }
 }
@@ -173,28 +193,28 @@ All scopes share the same `permissions` and `env` blocks (Layer 1 security: CC-n
 {
   "hooks": {
     "SessionStart": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/session-start.sh", "timeout": 10}]}
+      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.sh", "timeout": 10}]}
     ],
     "PreToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/bash-validator.sh", "timeout": 5}]}
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/bash-validator.sh", "timeout": 5}]}
     ],
     "PostToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/error-logger.sh", "timeout": 5}]}
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/error-logger.sh", "timeout": 5}]}
     ],
     "PostToolUseFailure": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/error-logger.sh", "timeout": 5}]}
+      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/error-logger.sh", "timeout": 5}]}
     ],
     "Stop": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/memory-check.sh", "timeout": 5}]}
+      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/memory-check.sh", "timeout": 5}]}
     ],
     "PreCompact": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/pre-compact.sh", "timeout": 5}]}
+      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/pre-compact.sh", "timeout": 5}]}
     ],
     "PostCompact": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/post-compact.sh", "timeout": 5}]}
+      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/post-compact.sh", "timeout": 5}]}
     ],
     "UserPromptSubmit": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/agent-suggest.sh", "timeout": 3}]}
+      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/agent-suggest.sh", "timeout": 3}]}
     ]
   }
 }
@@ -202,11 +222,19 @@ All scopes share the same `permissions` and `env` blocks (Layer 1 security: CC-n
 
 **Note:** Merge the shared `permissions` + `env` block with the chosen `hooks` block into a single `settings.json`. See `examples/developer/.claude/settings.json` for the full Standard+ shape.
 
+**Two shape rules that silently break hooks if you get them wrong:**
+- Each event maps to an array of `{matcher?, hooks: [...]}` objects. The **inner** `hooks` array is
+  mandatory. A flat `{"command": "..."}` parses fine and never runs.
+- Use `${CLAUDE_PROJECT_DIR}` in the command path. A relative path resolves against the session's
+  working directory, so the hook disappears the moment someone opens Claude Code in a subfolder.
+
 ### 2e. Rules (scope-based)
 
-**Standard and Full:** Copy rule files from `templates/rules/` to `.claude/rules/`:
+**Standard and Full:** Copy rule files from `templates/rules/` to `.claude/rules/` (no rename — these
+have no `.template` suffix):
 - `behavioral.md` - decision protocol, communication style
 - `security.md` - input validation, secrets, safe commands
+- `verification.md` - post-change verification reporting
 
 Customize behavioral.md based on Q1 (role) and Q6 (technical level).
 
@@ -245,7 +273,8 @@ Setup Verification:
 [x] Memory files: dashboard.md, todo.md, learnings.md, preferences.md, errors.md
 [x] Skills: /start, /end, /status [+ /research, /weekly-review if Standard+]
 [x] Hooks: X configured in settings.json
-[x] Rules: behavioral.md, security.md
+[x] Rules: behavioral.md, security.md, verification.md
+[x] Agents: planner.md
 [x] settings.json valid
 ```
 
@@ -269,7 +298,7 @@ Next steps:
 - Use /start to begin each session
 - Use /end to close sessions and save progress
 - Use /extend to add new features anytime
-- Use /loop 30m /status for periodic reminders (Claude Code v2.1.83+)
+- Use /loop 30m /status for periodic reminders
 
 Welcome to ALBA!
 ```
