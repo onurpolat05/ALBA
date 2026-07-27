@@ -112,6 +112,7 @@ Copy hook scripts from `templates/hooks/` to `.claude/hooks/`, dropping the `.te
 - `memory-check.sh` (Stop) - remind to save state
 - `error-logger.sh` (PostToolUse → Bash + PostToolUseFailure) - log error patterns from any tool
 - `pre-compact.sh` (PreCompact) - preserve context before compaction
+- `session-end.sh` (SessionEnd) - leave a dated trace in today's log even when `/end` is skipped
 
 **Full hooks** (Standard plus):
 - `agent-suggest.sh` (UserPromptSubmit) - suggest skills by keyword
@@ -123,110 +124,40 @@ Copy hook scripts from `templates/hooks/` to `.claude/hooks/`, dropping the `.te
 
 **CRITICAL: Without this file, hooks don't work.**
 
-Create `.claude/settings.json` with hook configuration matching selected scope.
+**Copy `templates/settings.json.template` to `.claude/settings.json`, then delete the hook entries
+that are not in the chosen scope.** Do not retype it from memory and do not compose it by hand.
+That template is the canonical wiring: it carries the `permissions` blocks, the env scrub, the
+`bash` command prefix and the `${CLAUDE_PROJECT_DIR}` paths, and it is the file `tools/doctor.sh`
+checks against. A second hand-written copy is how the `Write(.env)` rule stayed dead through two
+releases while the template had already been fixed.
 
-All scopes share the same `permissions` and `env` blocks (Layer 1 security: CC-native permission rules + subprocess credential scrub). Hooks differ by scope.
+Which `hooks` keys to keep:
 
-**Shared permissions + env block (all scopes):**
-```json
-{
-  "permissions": {
-    "ask": [
-      "Bash(git push:*)",
-      "Bash(git push --force:*)",
-      "Bash(npm publish:*)",
-      "Write(**/*.env)"
-    ],
-    "deny": [
-      "Bash(sudo:*)",
-      "Read(.env)",
-      "Write(.env)",
-      "Read(**/.aws/credentials*)",
-      "Read(**/.ssh/id_*)"
-    ]
-  },
-  "env": {
-    "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB": "1"
-  }
-}
-```
+| Scope | Keep these events |
+|-------|-------------------|
+| Minimal | `PreToolUse` |
+| Standard | `PreToolUse`, `SessionStart`, `PostToolUse`, `PostToolUseFailure`, `Stop`, `SessionEnd`, `PreCompact` |
+| Full | all of them - copy the template unchanged |
 
-**Minimal hooks block** (PreToolUse only):
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/bash-validator.sh", "timeout": 5}]}
-    ]
-  }
-}
-```
+Leave `permissions` and `env` exactly as they are in the template, at every scope. If the user
+named tools or paths during discovery that deserve an allow rule, add them to `permissions.allow`
+rather than editing what is already there.
 
-**Standard hooks block** (adds SessionStart, PostToolUse + PostToolUseFailure, Stop, PreCompact):
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.sh", "timeout": 10}]}
-    ],
-    "PreToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/bash-validator.sh", "timeout": 5}]}
-    ],
-    "PostToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/error-logger.sh", "timeout": 5}]}
-    ],
-    "PostToolUseFailure": [
-      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/error-logger.sh", "timeout": 5}]}
-    ],
-    "Stop": [
-      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/memory-check.sh", "timeout": 5}]}
-    ],
-    "PreCompact": [
-      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/pre-compact.sh", "timeout": 5}]}
-    ]
-  }
-}
-```
-
-**Full hooks block** (adds PostCompact, UserPromptSubmit):
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.sh", "timeout": 10}]}
-    ],
-    "PreToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/bash-validator.sh", "timeout": 5}]}
-    ],
-    "PostToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/error-logger.sh", "timeout": 5}]}
-    ],
-    "PostToolUseFailure": [
-      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/error-logger.sh", "timeout": 5}]}
-    ],
-    "Stop": [
-      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/memory-check.sh", "timeout": 5}]}
-    ],
-    "PreCompact": [
-      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/pre-compact.sh", "timeout": 5}]}
-    ],
-    "PostCompact": [
-      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/post-compact.sh", "timeout": 5}]}
-    ],
-    "UserPromptSubmit": [
-      {"hooks": [{"type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/agent-suggest.sh", "timeout": 3}]}
-    ]
-  }
-}
-```
-
-**Note:** Merge the shared `permissions` + `env` block with the chosen `hooks` block into a single `settings.json`. See `examples/developer/.claude/settings.json` for the full Standard+ shape.
-
-**Two shape rules that silently break hooks if you get them wrong:**
+**Three shape rules that silently break hooks if you get them wrong:**
 - Each event maps to an array of `{matcher?, hooks: [...]}` objects. The **inner** `hooks` array is
   mandatory. A flat `{"command": "..."}` parses fine and never runs.
 - Use `${CLAUDE_PROJECT_DIR}` in the command path. A relative path resolves against the session's
   working directory, so the hook disappears the moment someone opens Claude Code in a subfolder.
+- Keep the `bash ` prefix on the command. Without it the script has to carry its executable bit,
+  which does not survive every clone - and on Windows Git Bash there is no executable bit at all.
+
+**File permission rules use `Edit(path)`, never `Write(path)`.** Claude Code accepts a
+`Write(path)` rule, prints a warning about it at startup, and then ignores it - so a
+`deny: Write(.env)` looks like protection and provides none. `Edit(path)` covers every
+file-editing tool, including Write.
+
+After writing the file, verify it: `python3 -c "import json; json.load(open('.claude/settings.json'))"`
+and confirm every `command` path points at a script that exists.
 
 ### 2e. Rules (scope-based)
 
@@ -240,18 +171,29 @@ Customize behavioral.md based on Q1 (role) and Q6 (technical level).
 
 ## Phase 3: Generate CLAUDE.md
 
-Use `templates/claude/CLAUDE.md.template` as base. Customize from answers:
+Use `templates/claude/CLAUDE.md.template` as base. **Fill in its sections; do not add sections it
+does not have.** The template is the canonical shape, and what it leaves out, it leaves out on
+purpose.
+
+Customize from answers:
 
 - **Identity & Role** → Q1, Q2 answers
-- **Tools & Integrations** → Q4 (list selected tools, note MCP availability)
 - **Communication style** → Q6 (Beginner: friendly, explanatory / Advanced: concise, technical)
-- **Progressive disclosure table** → always include
-- **Self-improvement section** → always include
-- **Skills table** → only list skills that were installed
-- **Hooks table** → only list hooks that were configured
-- **Active Projects** → leave as placeholder
+- **Hooks table** → list the hooks you actually configured in 2c
+- **Active Projects** → leave as placeholder, with the one-line-per-project rule intact
 
-**CLAUDE.md must stay under 200 lines.** Details go in `.claude/docs/`.
+Do **not** add a skills table, an agents table, or a tools/MCP table. Skills, agents and MCP tools
+are discovered by the harness — their names and descriptions are already in the system prompt
+before CLAUDE.md is read. Listing them again costs context on every turn and goes stale the first
+time the user runs `/extend`. Hooks are the exception, and the reason the template keeps that one
+table: hooks are *not* discoverable, so CLAUDE.md is their only inventory.
+
+Do not add a self-improvement or memory-rules section either. That content lives in
+`.claude/rules/behavioral.md`, which is auto-loaded on every turn — restating it in CLAUDE.md
+creates two authorities that drift apart.
+
+**CLAUDE.md must stay under 200 lines**, and the template lands around 85. Details go in
+`.claude/docs/`; anything you are tempted to append is usually a sign it belongs there instead.
 
 ## Phase 4: Populate Initial Data
 
@@ -276,6 +218,15 @@ Setup Verification:
 [x] Rules: behavioral.md, security.md, verification.md
 [x] Agents: planner.md
 [x] settings.json valid
+```
+
+Do not tick a box from memory of having written the file — check it. Hooks fail silently, so
+"I created settings.json" and "the hooks will run" are different claims. At minimum, confirm the
+JSON parses and that every wired `command` points at a script that is actually on disk:
+
+```bash
+python3 -c "import json; d=json.load(open('.claude/settings.json')); print(len(d['hooks']), 'events')"
+ls .claude/hooks/
 ```
 
 Report any issues found. If all good, proceed.
