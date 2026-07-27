@@ -95,16 +95,20 @@ Read relevant files only when needed. Don't load everything into context.
 
 ## Hooks
 
-All 6 standard hooks are available:
+Automated responses to Claude Code events. Wired in `.claude/settings.json`, scripts in `.claude/hooks/`.
 
-| Hook | Trigger | Purpose |
-|------|---------|---------|
-| `session-start` | Session begins | Load context, show priorities |
-| `pre-compact` | Before context compaction | Save state to memory |
-| `memory-check` | Periodic | Verify memory consistency |
-| `error-logger` | Error occurs | Log to errors.md |
-| `bash-validator` | Before bash commands | Safety check |
-| `agent-suggest` | Complex task detected | Suggest spawning sub-agent |
+| Event | Script | Purpose |
+|-------|--------|---------|
+| `SessionStart` | `session-start.sh` | Load dashboard, show priorities |
+| `UserPromptSubmit` | `agent-suggest.sh` | Suggest a relevant skill |
+| `PreToolUse` | `bash-validator.sh` | Deny destructive commands |
+| `PostToolUse` | `error-logger.sh` | Log Bash failures |
+| `PostToolUseFailure` | `error-logger.sh` | Log Edit/Write/MCP failures |
+| `Stop` | `memory-check.sh` | Remind to save state (rate-limited) |
+| `SessionEnd` | `session-end.sh` | Trace the session in today's log |
+| `PreCompact` / `PostCompact` | `pre-compact.sh`, `post-compact.sh` | Carry priorities through compaction |
+
+Eight scripts, nine registrations - `error-logger.sh` is wired to both failure events.
 
 ---
 

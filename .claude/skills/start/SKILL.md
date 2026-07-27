@@ -1,6 +1,6 @@
 ---
 name: start
-description: Begin session - load context and show priorities
+description: Open a work session - reads dashboard and todo, checks for a resumable daily log, prints today's top priorities in under 10 lines. Use when user says "start", "let's begin", "good morning", "what am I working on today", "open the session", or types /start at the top of a session. Do NOT use for a mid-session check (use /status, which is read-only and does not look for a resume point), and do NOT use to close a session (use /end).
 context: inline
 effort: low
 allowed-tools: [Read, Glob]

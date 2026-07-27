@@ -9,9 +9,78 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **PATCH** (x.x.1): Bugfix, typo, documentation, security fix
 - **MINOR** (x.1.0): New skill, hook, example role, or non-breaking feature
-- **MAJOR** (x.0.0): Breaking changes to setup flow, memory structure, or CLAUDE.md template format
+- **MAJOR** (x.0.0): Breaking changes to setup flow, memory structure, or CLAUDE.md template format — or a raised minimum Claude Code version, since an unmet floor makes a working setup fail in ways that look like ALBA bugs
 
 ---
+
+## [2.0.0] - 2026-07-27
+
+ALBA v1.1.0 shipped on 2026-04-30 and was written against Claude Code v2.1.83. Three months of Claude Code releases later, parts of it had stopped working — not loudly, which is the problem. Hooks fail silently by design: a wrong field name, a wrong output shape, a default that flipped underneath you. The process exits 0, nothing is printed, and the feature simply never happens.
+
+This release fixes what was broken, removes what could not be verified, and makes the silent failures detectable.
+
+**Why MAJOR:** the minimum Claude Code version moves from v2.1.83 to v2.1.218 · the `PreToolUse` output contract changed and `bash-validator.sh` had to change with it · `examples/*/.claude/` is now generated from `templates/` and must not be hand-edited · `templates/agents/researcher.md` was removed.
+
+### Fixed
+
+- **`agent-suggest.sh` read a field that does not exist.** The `UserPromptSubmit` payload carries the prompt in the top-level `prompt` field; the hook parsed `.message // .user_prompt`, which always resolved to empty. It then exited 0 with no output — the correct behavior for "no suggestion," and indistinguishable from it. The hook was dead in every session since it shipped and nothing ever reported it. It now reads `.prompt`, with a matching grep fallback for machines without `jq`.
+- **`agent-suggest.sh` emitted a shape no event accepts.** Its suggestions were printed as `{"message": "..."}`, which is not part of any hook output contract and would have been injected as literal JSON text. Suggestions are now plain stdout, which `UserPromptSubmit` adds to the conversation as visible context — appropriate for a tip the user should also see.
+- **`bash-validator.sh` was lowering the permission floor it claimed to raise.** For any command its 20-pattern blocklist did not match, it printed `{"decision": "allow"}`. On `PreToolUse` that maps to `permissionDecision: "allow"`, whose documented effect is to **skip the permission prompt**. A hook presented as a security layer was silently auto-approving every command it had never heard of. It now emits `deny` on a match, `ask` if the validator itself fails, and **no output at all** otherwise, so the normal permission flow is left untouched. This is the reference behavior from the official example: `exit 0  # no decision; normal permission flow applies`.
+- **`bash-validator.sh` patterns were unanchored and case-insensitive**, so they matched their letters anywhere in a command string rather than a command being run. `git commit -m "fix reboot handler"` was blocked. Patterns are now anchored to a command position (start of string, or after `;`, `&`, `|`, `(`), matched case-sensitively for shell verbs and case-insensitively only for SQL. A wrapper-absorbing group in the anchor keeps `sudo rm -rf ~` and `env FOO=1 rm -rf /` in command position, so absorbing wrappers does not reopen the substring hole.
+- **`bash-validator.sh` fail-safe was mislabeled.** Its `ERR` trap emitted a top-level `decision: "block"`, a deprecated field on this event. A broken validator now emits `permissionDecision: "ask"` — the user is asked, rather than the validator silently becoming a no-op.
+- **The `settings.json` snippet in `templates/hooks/README-hooks.md` was structurally wrong.** It flattened the handler object into the event entry, omitting the mandatory inner `hooks` array. That form is accepted without complaint and installs nothing, so anyone who copied it ended up with no hooks and no error message. Corrected, with the requirement called out explicitly.
+- **Relative hook paths** (`bash .claude/hooks/x.sh`) resolve against the session's working directory and break the moment a session is opened in a subdirectory. All hook commands now use `${CLAUDE_PROJECT_DIR}`.
+- **The `.env` protection rules never applied.** `settings.json` carried `deny: Write(.env)` and `ask: Write(**/*.env)` — but file permission rules are matched on `Edit(path)` only, and `Edit` already covers every file-writing tool. Claude Code accepts a `Write(path)` rule, prints a startup warning about it, and then ignores it, so the rule that was supposed to guard credential files had been inert since v1.1.0 introduced it. Both are now `Edit(...)`, the redundant `Write(memory/**)` allow entry was dropped, and `tools/doctor.sh` fails on any `Write(path)` rule. Found by running a real session rather than by reading the file — the warning only appears at startup.
+- **`/setup` carried its own copy of `settings.json` and had drifted from the template.** The skill inlined the settings JSON three times, once per scope, so none of the template's fixes reached a freshly set-up project: it still emitted the dead `Write(.env)` rules, omitted `permissions.allow` entirely, never installed `session-end.sh`, and dropped the `bash ` command prefix that lets hooks run without an executable bit. Phase 2d now copies `templates/settings.json.template` and deletes the out-of-scope events, so there is one source again.
+- **`/setup` Phase 3 contradicted `CLAUDE.md.template`.** It instructed the wizard to write skills, tools and self-improvement sections into the generated `CLAUDE.md` — exactly the tables the template had removed, because skills and MCP tools are discovered by the harness and that content already lives in `rules/behavioral.md`. A setup following the skill produced a `CLAUDE.md` the template calls wrong. Phase 3 now says fill in the template's sections and add nothing it does not have, with the reasoning attached.
+- **Hook count was wrong everywhere.** READMEs and CONTRIBUTING said 6 hooks; the repository has shipped 7 since v1.1.0 added `post-compact.sh`, and now ships 8 across 9 event registrations (`error-logger.sh` is wired to both `PostToolUse` and `PostToolUseFailure`). Counts corrected in every document that states one, and made checkable — `tools/doctor.sh` greps every doc for a stated hook, skill or role count and fails if it disagrees with the files on disk. `sync-examples.sh` cannot catch this class of error, because the example role docs describe the shared config without being copies of it.
+- **`templates/claude/loop-integration.md.template` and `memory-compatibility.md.template` did not exist.** `templates/INDEX.md` listed both as generated docs, so the index pointed at files nothing produced. Both templates are now present.
+
+### Changed
+
+- **Minimum Claude Code is v2.1.218** (was v2.1.83); behavior verified against v2.1.220. The floor is set by the `background` frontmatter field, which the two forked skills need.
+- **`/research` and `/reflect` now set `background: false`.** Both carry `context: fork`. As of Claude Code v2.1.218, forked skills default to `background: true` — they run detached and their result arrives as a later notification rather than in the turn that invoked them. Both skills predate that release by months and changed behavior without anyone touching a line of them. Asking for research or reflection is a synchronous question, so the answer belongs in the turn that asked it.
+- **All 9 skill descriptions rewritten to the trigger-plus-boundary pattern** — `<what it does>. Use when user says "x", "y". Do NOT use for <z>.` The `description` is the only text Claude reads when deciding whether to invoke a skill; ALBA's previous descriptions were one-line definitions with no trigger phrases and no negative boundary.
+- **Error log moved** from `memory/knowledge/errors_raw.log` to `.claude/logs/errors_raw.log`, with rotation at 500 lines. It is machine-local runtime state, not memory content, and it previously grew unbounded inside the git-tracked memory tree. `.gitignore` now excludes `.claude/logs/` instead of the old path.
+- **`memory-check.sh` is rate-limited to once per 6 hours** via a guard file, and its "session longer than 30 minutes" heuristic was **removed**. That heuristic read file birth time, which most Linux filesystems report as `0` — so on those systems the condition was always true and the hook fired on every single `Stop`, meaning after every response. A reminder that frequent is one users learn to read past. The guard replaces it, and the hook now stays silent — without burning the guard window — when it has nothing concrete to say.
+- **`CLAUDE.md.template` cut from 149 to 85 lines** and `decision-protocol.md.template` from 260 to 68. The decision protocol lived in three places with three levels of detail. `templates/rules/behavioral.md` is now the single authority on when to ask and when to act — rules files are in context at the moment the decision is made, which a doc you would have to open is not. The doc keeps worked examples and phrasing, and never overrides the rule.
+- **`examples/*/.claude/` is generated from `templates/`.** Every hook script, doc and settings file previously existed in six independent copies, and a fix applied to one skipped the other five. The copies remain on disk so an example is still readable on GitHub, but they are build output now. Role-specific files — `CLAUDE.md`, `README.md`, `memory/` — are never overwritten.
+- **`templates/hooks/README-hooks.md` substantially expanded** — see Added.
+
+### Added
+
+- **`tools/sync-examples.sh`** — regenerates the shared parts of `examples/` from `templates/`. `--check` reports drift and exits non-zero without changing anything, so it works as a CI gate.
+- **`tools/doctor.sh`** — health check for the failures that produce no error: hook event names that are not among the 30 real events, `settings.json` entries missing the inner `hooks` array, hook commands pointing at scripts that do not exist, relative hook paths, a `PreToolUse` hook that returns `allow`, template/example drift, broken repo-relative links, stated counts that no longer match the files, stale version claims, leaked absolute home paths, and removal residue such as strikethrough or `DEPRECATED` tombstones. It also shell-parses every script and validates every JSON file. ALBA ships configuration rather than a runnable program, so this stands in for a test suite. Run it before committing and after upgrading Claude Code.
+- **`templates/settings.json.template`** — the canonical settings file, previously reconstructed by hand in each example. Includes a `permissions.allow` list for read-only operations (`git status`, `git diff`, `ls`, reads under `memory/` and `.claude/`), which ALBA had never used, alongside the existing `ask` and `deny` blocks.
+- **`session-end.sh` hook** on the `SessionEnd` event. ALBA's memory layer depends on `/end` being run, and the closing ritual is what users forget. This appends one dated line to today's log so a session that ended without `/end` is at least visible. It records that a session ran and when — it does not summarize or infer, because content that looks curated but came from a shell script is how a memory system starts lying.
+- **`templates/rules/verification.md`** — an auto-loaded rule covering what to report after a change: what was verified and with which command, what was not verified and how to check it, and a three-line close for multi-step runs. "I didn't verify this" is a useful sentence; a wrong "it works" costs a debugging session.
+- **`templates/hooks/README-hooks.md` now documents the hook surface properly:** all 30 hook events with the decision mechanism each one uses and which ones ALBA ships a hook for; the `if` filter with its critical constraint — **`if` only works on tool events** (`PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `PermissionDenied`), and putting it on any other event makes the hook never run and never report an error; handler types beyond `command` (`http`, `mcp_tool`, `prompt`, `agent`); and the timeout defaults (60s general, 30s `UserPromptSubmit`, 10s `MessageDisplay`).
+- **`examples/*/.claude/agents/`** — the example roles now ship the agent template, which previously existed only under `templates/`.
+
+### Removed
+
+- **`templates/agents/researcher.md`.** The `/research` skill already runs as a forked subagent doing the same job, so the repository offered two doors to one room with nothing to tell you which to use. The skill is the documented path.
+- **`maxTurns`, `disallowedTools` and `initialPrompt` from agent frontmatter.** v1.1.0 introduced these as "agent template hardening," but their enforcement could not be confirmed against current documentation — a constraint you cannot verify is not a constraint, and presenting one as a safety property is worse than not having it. For a hard restriction, `permissions.deny` in `settings.json` is the mechanism that is actually enforced.
+- **Unverifiable version attributions.** Hook comments credited specific releases for specific behaviors (`v2.1.76+`, `v2.1.105`, `v2.1.113`, `v2.1.119`). The behaviors are real; the version numbers could not be confirmed. Version numbers now appear only where they were verified, which in this release means v2.1.218 and v2.1.220.
+- **`memory/knowledge/errors_raw.log` from `.gitignore`** — superseded by `.claude/logs/`.
+
+### Security
+
+- `bash-validator.sh` no longer returns `allow`. This is the single most consequential change in the release: the previous behavior removed the permission prompt for every command outside a 20-pattern blocklist, which is strictly worse than having no hook at all.
+- `permissions.allow` in the shipped settings template is scoped to read-only commands and to paths inside the agent's own workspace. Nothing that writes outside `memory/`, nothing that leaves the machine.
+
+### Migration from v1.x
+
+Existing setups keep working in the sense that nothing crashes — but the fixes above only take effect once the templates are re-copied. In order:
+
+1. **Upgrade Claude Code to v2.1.218 or later.** On an older version, `background: false` is ignored and `/research` and `/reflect` run detached.
+2. **Re-copy the hook scripts** from `templates/hooks/` into your `.claude/hooks/`. The `agent-suggest.sh` and `bash-validator.sh` fixes are in the scripts themselves; nothing else picks them up.
+3. **Rewrite hook paths in `.claude/settings.json` to `${CLAUDE_PROJECT_DIR}`.** Copy `templates/settings.json.template` if your settings file has no local customizations. Register the new `SessionEnd` hook while you are in there.
+4. **Add `.claude/logs/` to `.gitignore`** and remove the `memory/knowledge/errors_raw.log` line. The old log file can be deleted, or moved to `.claude/logs/errors_raw.log` if you want to keep its history. It is read by the `/end` skill and by `pre-compact.sh`, both of which now look in the new location only.
+5. **Add `background: false`** to any of your own skills that use `context: fork` and are expected to answer in the same turn.
+6. **Run `tools/doctor.sh`** to confirm the wiring.
+
+If you have edited files under `examples/`, move those edits into `templates/` before running `tools/sync-examples.sh` — it will overwrite them.
 
 ## [1.1.0] - 2026-04-30
 

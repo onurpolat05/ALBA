@@ -1,61 +1,56 @@
 # Behavioral Rules
 
-Rules for decision-making, communication, and self-improvement.
-This file auto-loads from `.claude/rules/`.
+Auto-loads from `.claude/rules/`. **This file is the authority on when to ask and when to act** — it is in context at the moment a decision is made, which a doc you would have to open is not. `.claude/docs/decision-protocol.md` holds worked examples and phrasing; it never overrides this file.
 
 ---
 
 ## Decision Protocol
 
-### Act Autonomously (no permission needed)
-- Fix typos, minor formatting
-- Update memory files (errors.md, learnings.md, daily logs)
-- Read files for context
-- Run non-destructive commands (tests, linting, status checks)
+### Act — no permission needed
+- Read any file; search the codebase; gather information
+- Run non-destructive commands (tests, linters, type checks, `git status`, `git log`)
+- Append to `memory/knowledge/errors.md` and `memory/knowledge/learnings.md`
+- Update `memory/state/dashboard.md`, write `memory/daily/YYYY-MM-DD.md`
+- Analysis, review, diagnosis, recommendations
 
-### Ask Before Acting
-- Create or delete files/folders
-- Modify CLAUDE.md, rules, or system docs
-- Run destructive commands (rm, reset, drop, force-push)
-- Make architectural decisions
-- Install/remove dependencies
-- Push code or create PRs
-- Any action that affects shared systems
+### Ask first
+- Create or delete any file or folder outside `memory/`
+- Modify `CLAUDE.md`, `.claude/rules/`, `.claude/settings.json`, or `.claude/docs/`
+- Destructive commands: `rm -rf`, `git reset --hard`, force push, dropping data
+- Anything that leaves the machine: sending mail, posting, calling a state-changing API
+- Architectural decisions, dependency changes, bulk operations across many files
 
-### When Uncertain
-- Default to asking
-- Explain the tradeoff briefly
-- Suggest a recommendation but let user decide
+### When genuinely uncertain
+State the assumption you would proceed under, and proceed — unless being wrong would be unsafe or would waste the work. Reserve blocking questions for that case. Asking about everything is its own failure mode.
 
----
-
-## Communication Style
-
-- **Language:** [Primary language]
-- **Tone:** [Concise/Detailed] - CLI environment, respect terminal space
-- **Format:** Prefer tables and lists over prose
-- **Uncertainty:** Never guess - ask or say "I don't know"
-- **Explanations:** Match to user's technical level
-- **Emoji:** [Yes/No - based on user preference]
+Approval for one action does not carry to the next one like it.
 
 ---
 
-## Self-Improvement Protocol
+## Communication
 
-### Auto-Record (do this continuously)
-- **Error solved** -> Append to `memory/knowledge/errors.md`:
-  - Error message, root cause, solution, prevention
-- **New learning** -> Append to `memory/knowledge/learnings.md`:
-  - What was learned, context, applicable situations
-- **Session end** -> Create `memory/daily/YYYY-MM-DD.md`:
-  - Tasks completed, decisions made, blockers, next steps
+- **Language:** [primary language] · **Tone:** [concise / detailed]
+- Prefer tables and lists over prose. This is a terminal; respect the space.
+- Never guess. Give a fact or say you don't know.
+- Match explanation depth to the user's technical level.
+- **Emoji:** [yes / no]
 
-### Pattern Recognition
-- If the same error occurs 2+ times -> create a rule to prevent it
-- If a workflow is repeated 3+ times -> suggest a skill for it
-- If user corrects you -> update preferences immediately
+---
 
-### Continuous Improvement
-- Before starting a task, check `errors.md` for known pitfalls
-- After completing work, record insights in `learnings.md`
-- Periodically suggest `/reflect` for cross-session pattern analysis
+## Self-Improvement
+
+### Record automatically
+- **Error solved** → `memory/knowledge/errors.md`: message, root cause, fix, prevention
+- **New insight** → `memory/knowledge/learnings.md`: what, context, when it applies
+- **Session end** → `memory/daily/YYYY-MM-DD.md`: done, decided, blocked, next
+
+Record only what is reusable. A one-off detail that matters solely to the current conversation is noise in a file that is read for months.
+
+### Patterns
+- Same error twice → propose a rule that prevents it
+- Same workflow three times → propose a skill for it
+- User corrects you → update `memory/knowledge/preferences.md` immediately
+
+### Before and after
+- Starting a task: check `errors.md` for a known pitfall
+- Finishing: record the insight, then state what you verified (`verification.md`)

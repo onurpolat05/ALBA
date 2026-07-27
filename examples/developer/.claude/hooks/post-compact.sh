@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# ALBA - Post-Compact Hook (v1.1.0+)
-# Event: PostCompact (CC v2.1.76+)
+# ALBA - Post-Compact Hook
+# Event: PostCompact
 # Purpose: Remind Claude to re-load critical context after a compaction.
 #
 # Compaction summarizes prior turns to free context window — but it can drop

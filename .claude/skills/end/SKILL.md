@@ -1,6 +1,6 @@
 ---
 name: end
-description: End session - save state and create daily log
+description: Close a work session - asks what was completed, what was learned and what comes next, then updates dashboard, todo, learnings, errors and writes memory/daily/YYYY-MM-DD.md. Use when user says "end session", "wrap up", "I'm done for today", "save progress", "let's close", "log this session". Do NOT use for a week-level retrospective (use /weekly-review) or for cross-session pattern mining (use /reflect).
 context: inline
 effort: medium
 allowed-tools: [Read, Write, Edit, Glob, AskUserQuestion]
@@ -83,6 +83,6 @@ Next: [priority from Q3]
 
 ## Note on Auto-Memory vs ALBA Memory
 
-Claude Code's auto-memory system writes to `~/.claude/projects/<encoded-project-path>/memory/MEMORY.md`. Since CC v2.1.83, that index is **capped at 25KB / 200 lines** — entries past that are truncated. Keep auto-memory entries concise (one line, ~150 chars).
+Claude Code's auto-memory system writes to `~/.claude/projects/<encoded-project-path>/memory/MEMORY.md`. That index is **capped at 25KB / 200 lines** — entries past the cap are truncated, silently. Keep auto-memory entries to one line (~150 chars); the content lives in the linked file, not in the index.
 
 ALBA's own `memory/` (state, knowledge, projects, daily) is **separate** — no size cap, but keep entries short for readability. Auto-memory and ALBA memory coexist (see [memory-compatibility.md](../../docs/memory-compatibility.md)).

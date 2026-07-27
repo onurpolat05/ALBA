@@ -95,18 +95,20 @@ Active rules:
 
 ## Hooks
 
-Automated responses to Claude Code events.
+Automated responses to Claude Code events. Wired in `.claude/settings.json`, scripts in `.claude/hooks/`.
 
 | Event | Script | Purpose |
 |-------|--------|---------|
-| SessionStart | `session-start.sh` | Load context, show dashboard |
-| Stop | `memory-check.sh` | Remind to save if long session |
-| PreToolUse | `bash-validator.sh` | Block dangerous commands |
-| PostToolUse | `error-logger.sh` | Log error patterns |
-| UserPromptSubmit | `agent-suggest.sh` | Suggest relevant agents |
-| PreCompact | `pre-compact.sh` | Preserve critical context |
+| `SessionStart` | `session-start.sh` | Load dashboard, show priorities |
+| `UserPromptSubmit` | `agent-suggest.sh` | Suggest a relevant skill |
+| `PreToolUse` | `bash-validator.sh` | Deny destructive commands |
+| `PostToolUse` | `error-logger.sh` | Log Bash failures |
+| `PostToolUseFailure` | `error-logger.sh` | Log Edit/Write/MCP failures |
+| `Stop` | `memory-check.sh` | Remind to save state (rate-limited) |
+| `SessionEnd` | `session-end.sh` | Trace the session in today's log |
+| `PreCompact` / `PostCompact` | `pre-compact.sh`, `post-compact.sh` | Carry priorities through compaction |
 
-Hook scripts: `.claude/hooks/`
+Eight scripts, nine registrations - `error-logger.sh` is wired to both failure events.
 
 ---
 

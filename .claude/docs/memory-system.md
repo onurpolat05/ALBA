@@ -1,163 +1,86 @@
 # Memory System Guide
 
-## Overview
-
-The memory system helps Claude remember context across sessions. It's organized into categories for efficient retrieval.
+How ALBA remembers things between sessions, and — more importantly — how it avoids remembering everything.
 
 ## Structure
 
 ```
 memory/
-├── state/              # Current state (updated frequently)
-│   ├── todo.md        # Active tasks and goals
-│   └── dashboard.md   # Current priorities and deadlines
-├── knowledge/         # Long-term knowledge (updated occasionally)
-│   ├── learnings.md   # Accumulated knowledge
-│   ├── preferences.md # User preferences
-│   └── errors.md      # Error solutions (auto-updated)
-├── projects/          # Project-specific context
+├── state/              # Now. Rewritten constantly.
+│   ├── dashboard.md    # Priorities, active projects, deadlines
+│   └── todo.md         # This week's tasks, blockers
+├── knowledge/          # Durable. Accumulates.
+│   ├── learnings.md    # Reusable insights (Claude appends)
+│   ├── errors.md       # Error → cause → fix (Claude appends)
+│   └── preferences.md  # How you want to be worked with
+├── projects/           # Per project
 │   └── [project-name]/
-│       ├── context.md # Project overview
-│       └── ...        # Project files
-└── daily/             # Daily logs (auto-created)
+│       └── context.md  # Goal, status, decisions, next step
+└── daily/              # One file per session
     └── YYYY-MM-DD.md
 ```
 
-## How to Use
+## Flowing vs. Permanent
 
-### State Files (Update Frequently)
+This is the single rule that keeps memory from turning into a landfill. Every file is one of two kinds:
 
-**todo.md**
-- Active tasks and goals
-- This week's focus
-- Blockers
-- Update at session start/end
+| Kind | Files | Rule |
+|---|---|---|
+| **Flowing** | `state/dashboard.md`, `state/todo.md`, `daily/*` | Overwritten, consumed, and superseded. Once an item is done or absorbed into a project's `context.md`, **delete the line** — don't strike it through, don't mark it DONE and leave it. |
+| **Permanent** | `knowledge/*`, `projects/*/context.md` | Grows on purpose. Entries are written to be read months later, and edited in place when they turn out to be wrong. |
 
-**dashboard.md**
-- Current priorities and deadlines
-- Active projects overview
-- Blockers
-- Update at session start/end
+Two consequences worth internalizing:
 
-### Knowledge Files (Update Occasionally)
+- **A flowing file is a queue, not an archive.** If `todo.md` only ever gains lines, it has stopped being a todo list.
+- **Wrong information is worse than missing information.** A stale entry that contradicts reality costs more than the entry was ever worth. Delete outdated content outright — the history is in git if you need it. Never leave `~~strikethrough~~`, "DEPRECATED", or "no longer true" markers behind in an active file.
 
-**learnings.md**
-- New knowledge acquired
-- Insights and patterns
-- How to apply learnings
-- Claude updates automatically
+## What Does Not Go In Memory
 
-**preferences.md**
-- How you like to work
-- Communication style
-- Tool preferences
-- Update when preferences change
+`memory/` is git-tracked, plain text, and loaded into a model's context. Treat it accordingly.
 
-**errors.md**
-- Solutions to past errors
-- Troubleshooting guides
-- Claude updates automatically
-- Reference when similar errors occur
+- **No secrets.** No API keys, tokens, passwords, connection strings — not even "temporarily".
+- **No personal data about other people.** Names, contact details, health or financial information about third parties don't belong in a file that will be committed and re-read for months. Refer to people by role ("the client", "the reviewer") where the identity isn't the point.
+- **No confidential client or employer material.** Contract terms, pricing, unreleased plans. If it would need an NDA to email, it needs one to commit.
+- **No binaries or dumps.** No images, PDFs, database exports, or log dumps. Memory is text you will read; store artifacts elsewhere and link to them by path.
+- **Size:** if a single memory file passes ~500 lines, split it by topic or archive the resolved parts. If one entry passes ~50 lines, it is a project document, not a memory entry.
 
-### Project Files (Per Project)
+## Reading, Not Preloading
 
-Each project gets its own folder with:
-- `context.md` - Project overview, goals, status
-- Other project-specific files as needed
+Memory is lazy — nothing under `memory/` is in context until something reads it. Read on the trigger, not in advance:
 
-### Daily Logs (Auto-created)
+| Trigger | Read |
+|---|---|
+| Session start | `state/dashboard.md`, `state/todo.md` |
+| Error encountered | `knowledge/errors.md` |
+| Working on a project | `projects/[name]/context.md` |
+| About to record an insight | `knowledge/learnings.md` |
 
-- Created automatically by Claude
-- Summary of each session
-- Tasks completed
-- Learnings
-- Next steps
+## Recording
 
-## Best Practices
+Claude appends to `knowledge/errors.md` and `knowledge/learnings.md` on its own, and writes `daily/YYYY-MM-DD.md` at `/end`. The bar for an entry:
 
-### 1. Progressive Disclosure
-Don't load all memory files at once. Claude reads what's needed:
-- Session start → `todo.md`, `dashboard.md`
-- Error encountered → `errors.md`
-- Project work → `projects/[name]/context.md`
-- Learning recorded → `learnings.md`
+- **learnings.md** — reusable, non-obvious, and it cost something to find out. Not "React uses hooks."
+- **errors.md** — took real time to solve and could plausibly recur. Message, root cause, fix, prevention.
+- **A project's `context.md`** — decisions and their *reasons*. The reason is the part that isn't recoverable from the code later.
 
-### 2. Keep It Updated
-- Update `todo.md` weekly
-- Update `dashboard.md` at session end
-- Let Claude auto-update `learnings.md` and `errors.md`
+## Archiving
 
-### 3. Use Clear Language
-- Write for future you (or future Claude)
-- Be specific, not vague
-- Include dates for time-sensitive info
-
-### 4. Archive When Done
-- Move completed projects to `projects/archive/`
-- Keep active projects in `projects/`
-
-## Commands for Memory
-
-| Command | What It Does |
-|---------|-------------|
-| `/start` | Loads current state and priorities |
-| `/end` | Saves session summary to daily log |
-| `/status` | Quick status from current state |
-
-## Example Workflow
-
-### Session Start
-1. Run `/start`
-2. Claude reads `todo.md` and `dashboard.md`
-3. Shows priorities and tasks
-4. Ready to work
-
-### During Session
-1. Work on tasks
-2. Claude updates memory as needed
-3. Learns from errors → `errors.md`
-4. Records insights → `learnings.md`
-
-### Session End
-1. Run `/end`
-2. Claude creates daily log
-3. Updates `dashboard.md`
-4. Summarizes accomplishments
-
-## Tips
-
-**For Task Management:**
-- Keep `todo.md` focused on this week
-- Archive old tasks regularly
-- Use clear task descriptions
-
-**For Knowledge:**
-- Let Claude handle `learnings.md` - it's good at it
-- Review `errors.md` when stuck
-- Update `preferences.md` when workflow changes
-
-**For Projects:**
-- One folder per active project
-- Keep `context.md` updated
-- Archive when project completes
-
-**For Daily Logs:**
-- Auto-generated, no action needed
-- Great for weekly reviews
-- Reference when needed
+Finished project → move the folder to `memory/projects/archive/`. Resolved sections of a long knowledge file → move to `memory/knowledge/archive/`. Use `/reflect` to spot what has gone cold.
 
 ---
 
-## Limits & Cohabitation with CC Auto-Memory
+## Size Limits, and Claude Code's Own Memory
 
-ALBA memory (`memory/state/`, `memory/knowledge/`, `memory/projects/`, `memory/daily/`) has **no size caps** — files grow as your work grows. Use `/reflect` to consolidate when files get long.
+ALBA memory has **no size cap** — the limits above are editorial discipline, not enforcement.
 
-Claude Code's auto-memory system writes to `~/.claude/projects/<encoded-project-path>/memory/MEMORY.md`. Since CC v2.1.83, that index file is **capped at 25KB / 200 lines** — older entries are truncated. ALBA's memory is unaffected by this cap because it lives in your project under `memory/`, not in the auto-memory index.
+Claude Code has a separate, automatic memory at `~/.claude/projects/<encoded-project-path>/memory/`. Its index file `MEMORY.md` **is capped, at 25KB / 200 lines** — content past the cap is truncated. ALBA's `memory/` lives in your project and is unaffected by that cap.
 
-**Best practice:**
-- Use ALBA memory for narrative content (learnings, errors, project context).
-- Use Claude Code auto-memory for tactical preferences (one-line facts about you, your tools, your style).
-- See [memory-compatibility.md](memory-compatibility.md) for the full coexistence model.
+Split the work between them:
+
+- **ALBA memory** — narrative and structured content: learnings, error write-ups, project context, priorities.
+- **Claude Code auto-memory** — one-line tactical facts: build commands, code conventions, tool quirks.
+
+Full coexistence model: [memory-compatibility.md](memory-compatibility.md)
 
 ---
 

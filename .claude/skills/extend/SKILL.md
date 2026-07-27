@@ -1,8 +1,9 @@
 ---
 name: extend
-description: Add new features to your ALBA agent system
+description: Add one new capability to an existing ALBA setup - skill, hook, rule, slash command or MCP integration - interactively, then wire it into CLAUDE.md and settings.json. Use when user says "add a skill", "add a hook", "I want a rule for X", "connect Trello/Gmail/Linear", "extend my agent", "can ALBA also do X". Do NOT use for first-time setup (use /setup). If the user already knows they want a skill, /create-skill goes straight to writing SKILL.md - /extend is the router for when the component type is still open.
 context: inline
 effort: medium
+argument-hint: "[skill|hook|rule|command|mcp]"
 allowed-tools: [Read, Write, Edit, Glob, Grep, AskUserQuestion]
 ---
 
@@ -31,27 +32,48 @@ Types:
    ```yaml
    ---
    name: [skill-name]
-   description: [what it does]
+   description: [what it does]. Use when user says "x", "y". Do NOT use for [z].
    context: fork          # fork = subagent (protects context), inline = main context
+   background: false      # fork only: wait for the result in this turn (fork defaults to background)
    allowed-tools: [tools]
    ---
    ```
+   The `description` is the only field that decides whether the skill fires at the right moment —
+   a bare one-line summary will not trigger reliably. Full field reference:
+   `templates/skills/SKILL-TEMPLATE.md`.
 4. Add to CLAUDE.md Skills table
 5. Test immediately
 
 ### Hooks
 
-1. Identify event type: SessionStart, Stop, PreToolUse, PostToolUse, UserPromptSubmit, PreCompact
+1. Identify the event. Common ones: `SessionStart`, `UserPromptSubmit`, `PreToolUse`,
+   `PostToolUse`, `PostToolUseFailure`, `Stop`, `SubagentStop`, `PreCompact`, `PostCompact`,
+   `SessionEnd`. Claude Code v2.1.220 defines 30 events — see `templates/hooks/README-hooks.md`
+   for the full list and each one's output contract.
 2. Define what should happen when triggered
 3. Create `.claude/hooks/[name].sh` and make executable (`chmod +x`)
-4. Add to `.claude/settings.json`:
+4. Add to `.claude/settings.json` — note the **nested** `hooks` array; skipping the inner level is
+   the most common reason a newly added hook never runs:
    ```json
    {
      "hooks": {
-       "[EventType]": [{ "command": ".claude/hooks/[name].sh" }]
+       "[EventType]": [
+         {
+           "matcher": "Bash",
+           "hooks": [
+             {
+               "type": "command",
+               "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/[name].sh",
+               "timeout": 5
+             }
+           ]
+         }
+       ]
      }
    }
    ```
+   `matcher` only applies to tool events. Use `${CLAUDE_PROJECT_DIR}` rather than a relative path,
+   or the hook breaks for sessions started from a subdirectory.
 5. Test by triggering the event
 
 See `templates/hooks/` for examples.

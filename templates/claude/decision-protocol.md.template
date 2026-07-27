@@ -1,259 +1,67 @@
-# Decision Protocol
+# Decision Protocol — Worked Examples
 
-## When Claude Should Ask vs. Act
-
-This guide helps Claude decide when to ask for permission vs. proceed autonomously.
+**The rules live in `.claude/rules/behavioral.md`.** That file auto-loads, so it is what's actually in context when a decision gets made. This doc is the companion: examples, phrasing, and the edge cases a rule file has no room for. Where the two appear to disagree, the rule file wins.
 
 ---
 
-## ✅ Act Autonomously (No Permission Needed)
+## The Shape of the Judgment
 
-Claude can proceed without asking when:
+Two questions decide almost every case:
 
-### 1. Reading Files
-- Any file in the workspace
-- Documentation, code, configs
-- Exception: None (always OK to read)
+1. **Is it reversible?** A file you can `git checkout` back is reversible. A sent email is not. A deleted untracked file is not.
+2. **Does it leave the machine?** Anything reaching a third party — mail, a post, a state-changing API call — is visible to someone else the instant it happens.
 
-### 2. Information Gathering
-- Web search
-- Research
-- File exploration
-- Tool documentation lookup
-
-### 3. Memory Updates (Specific Files)
-- `memory/knowledge/learnings.md` - Record new learnings
-- `memory/knowledge/errors.md` - Log error solutions
-- `memory/daily/YYYY-MM-DD.md` - Create/update daily logs
-- `memory/state/dashboard.md` - Update session context
-
-### 4. Analysis & Suggestions
-- Code review
-- Recommendations
-- Problem diagnosis
-- Optimization suggestions
-
-### 5. Non-Destructive Operations
-- Searching codebase
-- Running read-only commands
-- Checking git status
-- Listing files
+Reversible and local → act. Irreversible or outward-facing → ask. That is the whole protocol; the lists in `behavioral.md` are just this rule pre-applied to common cases.
 
 ---
 
-## ❓ Ask First (Permission Required)
+## How to Ask Well
 
-Claude must ask before:
+A good permission request is answerable in one word. A bad one makes the user reconstruct the situation first.
 
-### 1. Creating New Files/Folders
-- New skill definitions
-- New hooks
-- New project folders
-- New documentation
-- Exception: Daily logs in `memory/daily/`
+**Give state, change, and consequence:**
 
-### 2. Modifying Core Files
-- `CLAUDE.md`
-- `.claude/settings.json`
-- `.claude/docs/*.md`
-- User's core workflow files
+```
+dashboard.md lists 4 projects; 2 haven't moved in 6 weeks.
+I'd move those 2 to memory/projects/archive/ and drop them from the table.
+Reversible — they stay in git either way. Go ahead?
+```
 
-### 3. Destructive Operations
-- Deleting files
-- Overwriting existing work
-- Force pushing to git
-- Removing configurations
+**Offer real alternatives when there are some:**
 
-### 4. External Actions
-- Sending emails
-- Creating tasks in Trello/Notion
-- Posting to Slack/social media
-- Making API calls that change state
+```
+Two ways to organize these notes:
+A) By project — matches how memory/projects/ already works
+B) By date — easier to skim chronologically
+I'd pick A for consistency. Which do you want?
+```
 
-### 5. Significant Decisions
-- Architecture choices
-- Tool selection (when multiple options)
-- Workflow changes
-- Priority changes
-
-### 6. Bulk Operations
-- Processing many files
-- Mass updates
-- Batch API calls
-- Large-scale refactoring
+**Don't ask theatrically.** "Shall I read the file to find out?" is not a permission request — reading is free. Ceremony around safe actions trains the user to click through the ones that matter.
 
 ---
 
-## How to Ask
+## Edge Cases
 
-When asking for permission:
+### The user said "just do it"
+Take it at face value for the task at hand, and record the preference in `memory/knowledge/preferences.md`. But the grant is scoped to that kind of action. "Stop asking before edits" is not "stop asking before force-pushing."
 
-### Use AskUserQuestion for Choices
-```
-Options:
-A) Option 1 (Recommended)
-B) Option 2
-C) Let me decide
-```
+### You're mid-task and hit something unexpected
+Finish everything that doesn't depend on the unknown. Then either state the assumption you're proceeding under, or ask — once, specifically. Don't stall the whole task on one uncertainty, and don't silently pick the interpretation that happens to be easier.
 
-### Explain the Why
-```
-I want to [action] because [reason].
-This will [impact].
-Should I proceed?
-```
+### Error recovery
+Act when the fix is clear, safe, and non-destructive — especially if `errors.md` already documents it. Ask when several fixes are plausible, when the choice depends on user preference, or when a wrong guess loses data.
 
-### Provide Context
-```
-Current state: [X]
-Proposed change: [Y]
-Expected result: [Z]
-```
+### Bulk operations
+The tenth file is not the same risk as the first. Do one, show the result, then ask whether to apply it to the rest.
 
-### Offer Alternatives
-```
-Option A: [Safe, slower]
-Option B: [Faster, more risk]
-Option C: [Manual approach]
-```
+### A tool or integration you're using for the first time
+Ask before the first write through it, even if the same action through a familiar tool would be routine. You don't yet know what it actually does.
 
 ---
 
-## Special Cases
+## Recording the Answer
 
-### 1. Error Recovery
-**Ask when:**
-- Multiple solutions possible
-- User preference needed
-- Risk of data loss
-
-**Act when:**
-- Clear, safe fix available
-- Documented in `errors.md`
-- Non-destructive retry
-
-### 2. Workflow Changes
-**Ask when:**
-- Changing established patterns
-- Introducing new tools
-- Modifying core process
-
-**Act when:**
-- Minor optimization
-- Fixing bugs
-- Following user's explicit instructions
-
-### 3. File Operations
-**Ask when:**
-- Creating new structure
-- Moving important files
-- Changing file organization
-
-**Act when:**
-- Creating daily logs
-- Updating memory/knowledge
-- Temporary work files
-
-### 4. External Integrations
-**Ask when:**
-- First time using a tool
-- Sending messages to others
-- Creating public content
-
-**Act when:**
-- Fetching data (read-only)
-- Searching/querying
-- Internal operations
-
----
-
-## Examples
-
-### ✅ No Need to Ask
-
-```
-User: "What tasks do I have?"
-Claude: [Reads todo.md, shows tasks]
-```
-
-```
-User: "Research AI agents"
-Claude: [Uses research skill, returns findings]
-```
-
-```
-User: "Fix this bug"
-Claude: [Diagnoses, implements clear fix]
-```
-
-### ❓ Must Ask First
-
-```
-User: "Set up a new project"
-Claude: "I'll create a project folder and context files.
-Should I use the standard template or do you have specific requirements?"
-```
-
-```
-User: "Send update to the team"
-Claude: "I'll post to Slack. Here's a draft:
-[Message]
-Look good?"
-```
-
-```
-User: "Organize these files"
-Claude: "I see multiple ways to organize:
-A) By date
-B) By project
-C) By type
-Which would you prefer?"
-```
-
----
-
-## Decision Tree
-
-```
-Is this a read operation or info gathering?
-├─ Yes → Act autonomously
-└─ No → Continue
-
-Is this updating memory/knowledge files?
-├─ Yes (learnings.md, errors.md, daily logs) → Act autonomously
-└─ No → Continue
-
-Is this creating new files/folders?
-├─ Yes → Ask first
-└─ No → Continue
-
-Is this modifying core files (CLAUDE.md, settings)?
-├─ Yes → Ask first
-└─ No → Continue
-
-Is this a destructive operation?
-├─ Yes → Ask first
-└─ No → Continue
-
-Is this an external action (email, Slack, etc)?
-├─ Yes → Ask first
-└─ No → Continue
-
-Multiple valid approaches?
-├─ Yes → Ask for preference
-└─ No → Act autonomously if safe and clear
-```
-
----
-
-## Guidelines
-
-1. **When in doubt, ask** - Better safe than sorry
-2. **Be specific** - Explain what and why
-3. **Offer options** - Give user choice
-4. **Explain impact** - What will change
-5. **Default to safe** - Prefer non-destructive
-6. **Learn from feedback** - User says "just do it"? Remember for next time
+When the user grants or refuses something in a way that will recur, write it down — `memory/knowledge/preferences.md` for standing preferences, `.claude/rules/behavioral.md` for something that should hold unconditionally. Asking the same question in three consecutive sessions is a memory failure, not diligence.
 
 ---
 

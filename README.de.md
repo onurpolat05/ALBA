@@ -8,8 +8,8 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
-  <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.83+-purple.svg" alt="Claude Code minimum"></a>
-  <a href="https://github.com/anthropics/claude-code/releases"><img src="https://img.shields.io/badge/Tested-v2.1.123-green.svg" alt="Getestet mit v2.1.123"></a>
+  <a href="https://docs.claude.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.218+-purple.svg" alt="Claude Code minimum"></a>
+  <a href="https://github.com/anthropics/claude-code/releases"><img src="https://img.shields.io/badge/Tested-v2.1.220-green.svg" alt="Getestet mit v2.1.220"></a>
   <a href="https://github.com/onurpolat05/ALBA/stargazers"><img src="https://img.shields.io/github/stars/onurpolat05/ALBA?style=social" alt="Stars"></a>
 </p>
 
@@ -17,7 +17,7 @@
 
 ALBA verwandelt Claude Code in einen **persönlichen KI-Agenten**, der sich Ihre Prioritäten merkt, aus Ihren Fehlern lernt und sich an Ihren Arbeitsablauf anpasst — egal ob Sie Entwickler, Projektmanager, Forscher, Gründer oder Content Creator sind.
 
-**10 Minuten interaktives Setup. Keine Abhängigkeiten. Reines Markdown.**
+**10 Minuten interaktives Setup. Kein Paketmanager, kein Build-Schritt, nichts, das dauerhaft läuft — Bash-Skripte und Markdown-Dateien.**
 
 <p align="center">
   <img src="assets/demo.gif" alt="ALBA /setup Demo" width="100%">
@@ -48,10 +48,11 @@ your-agent/
 │   └── daily/                    # Sitzungsprotokolle (automatisch erstellt)
 ├── .claude/
 │   ├── skills/                   # 9 integrierte Skills
-│   ├── hooks/                    # 6 automatisierte Event-Handler
+│   ├── hooks/                    # 8 automatisierte Event-Handler
+│   ├── agents/                   # Subagent-Definitionen
 │   ├── rules/                    # Verhaltensrichtlinien (automatisch geladen)
 │   ├── docs/                     # Referenzdokumentation (lazy-loaded)
-│   └── settings.json             # Hook-Konfiguration
+│   └── settings.json             # Hook-Konfiguration + Berechtigungen
 ```
 
 ## Kernfunktionen
@@ -79,18 +80,24 @@ Dateibasierter Drei-Schichten-Speicher, der sitzungsübergreifend erhalten bleib
 | `/extend` | Jederzeit neue Skills, Hooks oder Rules hinzufügen |
 | `/reflect` | Sitzungsübergreifende Musteranalyse |
 | `/create-skill` | Geführter Skill-Erstellungsassistent |
-| `/setup` | Interaktives Ersteinrichtung |
+| `/setup` | Interaktive Ersteinrichtung |
 
-### 6 automatisierte Hooks
+### 8 automatisierte Hooks
 
-| Ereignis | Was passiert |
-|----------|-------------|
-| Sitzung startet | Dashboard wird geladen, Prioritäten angezeigt |
-| Gefährlicher Befehl | Wird vor der Ausführung blockiert |
-| Bash-Fehler | Automatisch für Mustererkennung protokolliert |
-| Sitzung endet | Erinnerung, den Zustand zu speichern |
-| Sie geben einen Prompt ein | Relevante Skills werden vorgeschlagen |
-| Context Compacting | Kritische Informationen bleiben erhalten |
+| Claude Code Event | Script | Was passiert |
+|---|---|---|
+| `SessionStart` | `session-start.sh` | Dashboard wird geladen, Prioritäten angezeigt |
+| `UserPromptSubmit` | `agent-suggest.sh` | Passender Skill wird zu dem vorgeschlagen, was Sie gerade getippt haben |
+| `PreToolUse` | `bash-validator.sh` | Destruktiver Befehl wird abgelehnt, bevor er läuft |
+| `PostToolUse` | `error-logger.sh` | Bash-Fehler werden zur Mustererkennung protokolliert |
+| `PostToolUseFailure` | `error-logger.sh` | Edit-, Write- und MCP-Fehler ebenfalls protokolliert |
+| `Stop` | `memory-check.sh` | Erinnerung, den Zustand zu speichern — mit Rate-Limit, nicht bei jedem Turn |
+| `SessionEnd` | `session-end.sh` | Sachlicher Eintrag im heutigen Protokoll, auch wenn Sie `/end` überspringen |
+| `PreCompact` / `PostCompact` | `pre-compact.sh`, `post-compact.sh` | Prioritäten überstehen die Context Compaction |
+
+Neun Registrierungen, acht Skripte — `error-logger.sh` ist an beide Tool-Fehler-Events gebunden.
+
+**Zum Validator:** Er lehnt eine kurze Liste tatsächlich destruktiver Befehle ab und schweigt zu allem anderen. Schweigen heißt *schweigen* — keine Ausgabe, Exit 0, normaler Berechtigungsablauf. Ein `PreToolUse` Hook, der mit `"allow"` antwortet, überspringt Ihren Berechtigungs-Prompt vollständig; ein Validator, der alles durchwinkt, was seine Blocklist verfehlt hat, ist damit kein Sicherheitsnetz, sondern ein Loch. ALBA hat dieses Loch bis v2.0.0 mitgeschleppt.
 
 ### Selbstverbesserung
 
@@ -135,6 +142,8 @@ claude
 
 Beantworten Sie 7 Fragen (~10 Minuten). Ihr personalisierter Agent ist bereit.
 
+**Bestätigen Sie den Trust-Dialog, wenn Sie den Ordner zum ersten Mal öffnen.** Bis dahin ignoriert Claude Code die `permissions.allow`-Liste in `settings.json` — Hooks laufen weiterhin, aber Sie werden für Lesezugriffe und Befehle gefragt, die eigentlich still durchgehen sollten. Das wirkt weniger wie ein nicht vertrauenswürdiger Ordner als wie ein kaputtes Setup.
+
 ---
 
 ## Täglicher Arbeitsablauf
@@ -155,7 +164,7 @@ Freitag:
 
 Jederzeit:
   /extend                   # "Ich möchte einen Content-Creation-Skill" → wird erstellt
-  /loop 30m /status         # Periodische Erinnerungen (Claude Code v2.1.83+)
+  /loop 30m /status         # Periodische Erinnerungen, sitzungsbezogen
 ```
 
 ---
@@ -168,10 +177,10 @@ Jederzeit:
 | Setup-Erfahrung | Manuelle Konfiguration | Copy-Paste | Interaktiver Assistent (7 Fragen) |
 | Rollenunterstützung | Generisch | Nur Entwickler | Jede Rolle (5 Beispiele enthalten) |
 | Selbstverbesserung | Nein | Nein | Automatische Fehler- und Erkenntniserfassung |
-| Hooks | Manuelles Setup | Einige Templates | 6 Hooks, automatisch konfiguriert |
+| Hooks | Manuelles Setup | Einige Templates | 8 Hooks, automatisch konfiguriert |
 | Skills | Keine integrierten | Variiert | 9 integrierte, erweiterbar |
 | Kontexteffizienz | N/A | N/A | Progressive Disclosure (< 200 Zeilen) |
-| `/loop`-Unterstützung | N/A | N/A | Dokumentierte Integration |
+| Konfigurations-Check | `/doctor` (Ihre Installation) | Nein | `tools/doctor.sh` (die Konfiguration selbst) |
 
 ---
 
@@ -193,20 +202,29 @@ Jedes Beispiel enthält vorgefüllte Dashboards, exemplarische Tagesprotokolle u
 
 ## Architektur
 
-### Skills 2.0
+### Skills
 
-Skills verwenden YAML-Frontmatter mit expliziten Metadaten:
+Skills sind Markdown-Dateien mit YAML-Frontmatter. Die `description` ist keine Dekoration — sie ist das Einzige, was Claude liest, wenn es entscheidet, ob ein Skill aufgerufen wird. Deshalb sagen ALBAs Descriptions beides: wann ein Skill auslösen soll und wann nicht.
 
 ```yaml
 ---
 name: research
-description: Web research with structured output
-context: fork          # runs as subagent (doesn't bloat main context)
-allowed-tools: [Read, Write, WebSearch, WebFetch]
+description: Structured web research with cited sources. Use when user says
+  "research X", "look into X". Do NOT use for single-fact lookups.
+context: fork              # runs in a subagent, main context stays clean
+agent: general-purpose     # which subagent type the fork uses
+background: false          # wait for the result in this turn (see below)
+effort: medium
+argument-hint: <topic> [deep]
+allowed-tools: [Read, Write, Glob, Grep, WebSearch, WebFetch]
 ---
 ```
 
 `context: fork` = aufwändige Aufgaben laufen als Subagents. `context: inline` = schnelle Aufgaben in der Hauptkonversation.
+
+**Die `background`-Falle.** Seit Claude Code v2.1.218 gilt bei `context: fork` standardmäßig `background: true` — der Subagent läuft losgelöst, und sein Ergebnis kommt nicht in dem Turn zurück, der ihn aufgerufen hat. Jeder Fork-Skill, der vor dieser Version geschrieben wurde, hat sein Verhalten geändert, ohne dass sich eine einzige Zeile geändert hätte. ALBAs `/research` und `/reflect` setzen `background: false` explizit, denn wer eine Frage stellt, erwartet die Antwort jetzt. Genau deshalb liegt ALBAs Minimum bei v2.1.218.
+
+Vollständige Frontmatter-Referenz: [`templates/skills/SKILL-TEMPLATE.md`](templates/skills/SKILL-TEMPLATE.md).
 
 ### Speichersystem
 
@@ -219,7 +237,25 @@ LOGS (automatisch)        →  memory/daily/YYYY-MM-DD.md
 
 ### Hook-System
 
-Hooks sind Bash-Skripte, die durch Claude Code Events ausgelöst und in `.claude/settings.json` konfiguriert werden. Sie laufen automatisch — kein manueller Aufruf nötig.
+Hooks sind Bash-Skripte, die durch Claude Code Events ausgelöst und in `.claude/settings.json` verdrahtet werden. Sie laufen automatisch — kein manueller Aufruf nötig. Claude Code stellt 30 Hook-Events bereit; ALBA nutzt neun davon und dokumentiert alle in [`templates/hooks/README-hooks.md`](templates/hooks/README-hooks.md).
+
+Hooks scheitern lautlos. Ein falsch geschriebener Event-Name, ein fehlendes inneres `hooks`-Array, ein relativer Pfad, der bricht, sobald Sie eine Sitzung in einem Unterverzeichnis öffnen — nichts davon erzeugt einen Fehler. Die Funktion passiert einfach nie. Genau dafür ist `tools/doctor.sh` da.
+
+### Subagents
+
+`.claude/agents/` enthält Subagent-Definitionen — benannte Rollen, an die Claude delegieren kann. ALBA liefert genau eine mit, `planner.md`, und hält sie bewusst schlank. Für Frontmatter-Felder, die vorgeben, die Tools eines Agents einzuschränken, ließ sich nicht belegen, dass sie tatsächlich etwas erzwingen; die Einschränkung steht deshalb als Anweisung da, statt als Konfiguration aufzutreten. Wenn Sie eine harte Grenze brauchen, gehört sie in `permissions.deny`: Deny-Regeln werden ausgewertet, unabhängig davon, was ein Agent oder Hook verlangt.
+
+### Single Source of Truth
+
+`templates/` ist die einzige Stelle, die Sie bearbeiten. Der `.claude/`-Baum in jeder Beispielrolle wird daraus generiert:
+
+```bash
+tools/sync-examples.sh          # regenerate examples/ from templates/
+tools/sync-examples.sh --check  # report drift without changing anything
+tools/doctor.sh                 # full health check, run before committing
+```
+
+Rollenspezifische Dateien — `CLAUDE.md`, `README.md`, `memory/` — werden nie überschrieben; genau dafür ist ein Beispiel da. Vor v2.0.0 lag jedes Hook-Skript an sechs Stellen gleichzeitig, und die Beispieldokumentation war ein ganzes Release hinter ihre Templates zurückgefallen.
 
 ### Kompatibilität
 
@@ -247,10 +283,13 @@ Oder fragen Sie einfach direkt:
 
 ## Voraussetzungen
 
-- **Claude Code** v2.1.83+ Minimum — getestet bis v2.1.123 (neueste Version empfohlen). [Installieren](https://docs.anthropic.com/en/docs/claude-code).
+- **Claude Code v2.1.218 oder neuer.** Verifiziert gegen v2.1.220. [Installieren](https://docs.claude.com/en/docs/claude-code). Diese Untergrenze ist nicht willkürlich: `background` für geforkte Skills kam mit v2.1.218, und ohne dieses Feld liefern `/research` und `/reflect` ihre Antworten an einen Background-Task statt an Sie.
 - **Git**
+- **jq** — wird von den Hooks zum Parsen des Event-JSON genutzt. Jeder Hook fällt ohne jq auf einen grep-Fallback zurück, aber die Installation ist ein einziger Befehl.
 
 MCP-Server sind optionale Erweiterungen — ALBA funktioniert vollständig eigenständig.
+
+Sie aktualisieren Claude Code? Führen Sie `tools/doctor.sh` aus. Es prüft genau die Dinge, die über Versionen hinweg lautlos brechen: Hook-Event-Namen, Settings-Schema, tote Skript-Pfade.
 
 ---
 
@@ -288,6 +327,8 @@ Beiträge sind willkommen! Siehe [CONTRIBUTING.md](CONTRIBUTING.md).
 - Eigene Skill-Templates
 - Hook-Rezepte
 - Integrationsleitfäden
+
+Bearbeiten Sie `templates/`, niemals `examples/` — und führen Sie `tools/sync-examples.sh` sowie `tools/doctor.sh` aus, bevor Sie einen PR öffnen.
 
 ---
 

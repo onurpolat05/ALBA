@@ -1,13 +1,31 @@
 ---
 name: research
-description: Web research with structured output using available search tools
+description: Structured web research with cited sources and confidence levels; runs in a forked subagent, quick (3-5 sources) or deep (8-10 sources, saved to memory/research/). Use when user says "research X", "look into X", "find information about X", "investigate X", "what's the state of X". Do NOT use for questions answerable from the codebase or memory files, for single-fact lookups (just answer, or fetch the one URL), or when the user already gave you the source to read.
 context: fork
-allowed-tools: [Read, Write, Glob, Grep, WebSearch, WebFetch]
+agent: general-purpose
+background: false
+effort: medium
+argument-hint: <topic> [deep]
+allowed-tools: [Read, Write, Glob, Grep, WebSearch, WebFetch, mcp__exa__web_search_exa, mcp__firecrawl__firecrawl_search, mcp__firecrawl__firecrawl_scrape]
 ---
 
 # /research - Web Research
 
 Perform structured web research on any topic. Runs as a subagent (fork) to keep main context clean.
+
+## Why `background: false`
+
+`context: fork` alone is not enough. Since Claude Code v2.1.218, forked skills default to
+`background: true` — they run detached and the result arrives as a later notification instead of
+in the turn that invoked the skill. Research is a request for an answer *now*, so this skill pins
+`background: false`: the fork still keeps its search noise out of the main context, but the
+conversation waits for the report and hands it back inline.
+
+If you copy this skill into a workflow where you genuinely want fire-and-forget research
+(e.g. kicked off by a scheduled task), drop the `background: false` line.
+
+**Requires Claude Code v2.1.218 or later.** On older versions the field is ignored and the skill
+runs inline-blocking as it always did.
 
 ## Input
 
@@ -15,6 +33,8 @@ Perform structured web research on any topic. Runs as a subagent (fork) to keep 
 /research [topic]
 /research [topic] deep
 ```
+
+`$ARGUMENTS` carries the whole invocation; the trailing word `deep` selects deep mode.
 
 - **Default (quick):** 3-5 sources, summary format
 - **Deep:** 8-10 sources, full analysis with confidence ratings
@@ -33,6 +53,10 @@ Use available tools with graceful fallback:
 | 4th | `WebFetch` (built-in) | Fetch specific URLs |
 
 **Fallback rule:** If an MCP tool is unavailable, skip it and use the next available. WebSearch + WebFetch are always available as baseline.
+
+The Exa and Firecrawl entries in `allowed-tools` are there so the chain works for people who *do*
+have those MCP servers connected. MCP servers are optional in ALBA — if you never install them,
+those entries simply never match anything and the skill runs on the built-in tools.
 
 ### 2. Gather & Validate
 

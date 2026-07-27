@@ -2,89 +2,86 @@
 
 # ALBA - Memory Check Hook
 # Event: Stop
-# Purpose: Remind to save session state if session was long enough
+# Purpose: Occasionally remind you to persist session state.
 #
-# Only reminds if session lasted > 30 minutes (avoids being annoying).
-# Checks if dashboard was updated today.
-# Cross-platform (macOS + Linux). Never exits 1.
+# IMPORTANT - what Stop actually means: it fires every time Claude finishes a
+# response, NOT once when the session ends. ALBA <= v1.1.0 printed a
+# "=== Session Ending ===" banner unconditionally, so a 40-turn session printed
+# it 40 times. A hook that speaks on every turn stops being read.
+#
+# Two changes follow from that:
+#   1. A time-based guard: at most one reminder per $REMIND_INTERVAL seconds.
+#      State lives in .claude/logs/ (machine-local runtime state - gitignore it).
+#   2. Silence when there is nothing to say. The reminder only appears when a
+#      concrete condition is true (no daily log today, or a stale dashboard).
+#
+# The old "session longer than 30 min" heuristic was removed: it read file birth
+# time via `stat -c %W`, which returns 0 on most Linux filesystems, so the check
+# was effectively always true there and unreliable on macOS.
+#
+# Cross-platform (macOS bash 3.2 + Linux + Git Bash). Never exits non-zero.
 
-TODAY=$(date '+%Y-%m-%d')
+trap 'exit 0' ERR
 
-# Determine session duration from today's daily log
-SESSION_LONG=false
-if [ -f "memory/daily/${TODAY}.md" ]; then
-  # Check file modification time vs creation to estimate session length
-  # Portable approach: check if the file was modified more than 30 min ago
-  if command -v stat >/dev/null 2>&1; then
-    if [ "$(uname)" = "Darwin" ]; then
-      FILE_MOD=$(stat -f %m "memory/daily/${TODAY}.md" 2>/dev/null || echo "0")
-    else
-      FILE_MOD=$(stat -c %Y "memory/daily/${TODAY}.md" 2>/dev/null || echo "0")
-    fi
-    NOW=$(date +%s)
-    DIFF=$(( NOW - FILE_MOD ))
-    # If file was modified recently but created > 30 min ago, session is long
-    # Alternative: if daily log exists and has content, check its first timestamp
-    if [ "$DIFF" -lt 1800 ] 2>/dev/null; then
-      # File was modified recently - check if it's been around > 30 min
-      if [ "$(uname)" = "Darwin" ]; then
-        FILE_BIRTH=$(stat -f %B "memory/daily/${TODAY}.md" 2>/dev/null || echo "$FILE_MOD")
-      else
-        FILE_BIRTH=$(stat -c %W "memory/daily/${TODAY}.md" 2>/dev/null || echo "$FILE_MOD")
-      fi
-      BIRTH_DIFF=$(( NOW - FILE_BIRTH ))
-      if [ "$BIRTH_DIFF" -gt 1800 ] 2>/dev/null; then
-        SESSION_LONG=true
-      fi
-    fi
-  fi
+REMIND_INTERVAL=21600   # 6 hours
+
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
+LOG_DIR="${PROJECT_DIR}/.claude/logs"
+GUARD_FILE="${LOG_DIR}/.memory-check-last"
+
+TODAY=$(date '+%Y-%m-%d' 2>/dev/null) || exit 0
+NOW=$(date +%s 2>/dev/null) || exit 0
+
+# --- Spam guard ------------------------------------------------------------
+LAST=0
+if [ -f "$GUARD_FILE" ]; then
+  LAST=$(cat "$GUARD_FILE" 2>/dev/null | tr -d '[:space:]') || LAST=0
+  case "$LAST" in
+    ''|*[!0-9]*) LAST=0 ;;
+  esac
+fi
+if [ "$LAST" -gt 0 ] 2>/dev/null && [ $(( NOW - LAST )) -lt "$REMIND_INTERVAL" ] 2>/dev/null; then
+  exit 0
 fi
 
-# Only show reminders if session was meaningful
+# --- Conditions worth mentioning -------------------------------------------
+MESSAGES=""
+
+DAILY_LOG="${PROJECT_DIR}/memory/daily/${TODAY}.md"
+if [ -d "${PROJECT_DIR}/memory/daily" ] && [ ! -f "$DAILY_LOG" ]; then
+  MESSAGES="${MESSAGES}
+- No daily log for today. /end creates one and records what happened."
+fi
+
+DASHBOARD="${PROJECT_DIR}/memory/state/dashboard.md"
+if [ -f "$DASHBOARD" ]; then
+  DASH_MOD=0
+  if [ "$(uname 2>/dev/null)" = "Darwin" ]; then
+    DASH_MOD=$(stat -f %m "$DASHBOARD" 2>/dev/null) || DASH_MOD=0
+    DASH_DATE=$(date -r "$DASH_MOD" '+%Y-%m-%d' 2>/dev/null) || DASH_DATE=""
+  else
+    DASH_MOD=$(stat -c %Y "$DASHBOARD" 2>/dev/null) || DASH_MOD=0
+    DASH_DATE=$(date -d "@$DASH_MOD" '+%Y-%m-%d' 2>/dev/null) || DASH_DATE=""
+  fi
+  if [ -n "$DASH_DATE" ] && [ "$DASH_DATE" != "$TODAY" ]; then
+    MESSAGES="${MESSAGES}
+- Dashboard was last updated on ${DASH_DATE}. Consider refreshing it."
+  fi
+elif [ -d "${PROJECT_DIR}/memory/state" ]; then
+  MESSAGES="${MESSAGES}
+- No dashboard yet (memory/state/dashboard.md)."
+fi
+
+# Nothing to say: stay silent and do NOT burn the guard window.
+if [ -z "$MESSAGES" ]; then
+  exit 0
+fi
+
+mkdir -p "$LOG_DIR" 2>/dev/null || true
+echo "$NOW" > "$GUARD_FILE" 2>/dev/null || true
+
 echo ""
-echo "=== Session Ending ==="
-
-# Remind to use /end for long sessions
-if [ "$SESSION_LONG" = true ]; then
-  echo ""
-  echo "Long session detected (>30 min)."
-  echo "Tip: Run /end to save session state, learnings, and update dashboard."
-fi
-
-# Check if dashboard was updated today
-DASHBOARD_STALE=false
-if [ -f "memory/state/dashboard.md" ]; then
-  if command -v stat >/dev/null 2>&1; then
-    if [ "$(uname)" = "Darwin" ]; then
-      DASH_MOD=$(stat -f %m "memory/state/dashboard.md" 2>/dev/null || echo "0")
-    else
-      DASH_MOD=$(stat -c %Y "memory/state/dashboard.md" 2>/dev/null || echo "0")
-    fi
-    # Check if dashboard was modified today
-    if [ "$(uname)" = "Darwin" ]; then
-      DASH_DATE=$(date -r "$DASH_MOD" '+%Y-%m-%d' 2>/dev/null || echo "")
-    else
-      DASH_DATE=$(date -d "@$DASH_MOD" '+%Y-%m-%d' 2>/dev/null || echo "")
-    fi
-    if [ "$DASH_DATE" != "$TODAY" ]; then
-      DASHBOARD_STALE=true
-    fi
-  fi
-elif [ -d "memory/state" ]; then
-  # Dashboard doesn't exist yet
-  DASHBOARD_STALE=true
-fi
-
-if [ "$DASHBOARD_STALE" = true ]; then
-  echo ""
-  echo "Dashboard not updated today. Consider refreshing it."
-fi
-
-# Check if daily log exists
-if [ ! -f "memory/daily/${TODAY}.md" ]; then
-  echo ""
-  echo "No daily log for today. Use /end to create one."
-fi
-
+echo "--- ALBA memory check ---"
+echo "$MESSAGES"
 echo ""
 exit 0

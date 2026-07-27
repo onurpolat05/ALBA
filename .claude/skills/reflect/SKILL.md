@@ -1,8 +1,11 @@
 ---
 name: reflect
-description: Cross-session pattern analysis - find recurring themes, derive rules
+description: Cross-session pattern analysis - reads recent daily logs, errors and learnings to surface recurring problems, then proposes rules, skills or hooks with evidence. Runs in a forked subagent. Use when user says "reflect", "find patterns", "what keeps going wrong", "how can I improve my workflow", "analyze my sessions", "am I repeating mistakes". Do NOT use for this week's summary and next-week planning (use /weekly-review) or for closing a single session (use /end).
 context: fork
+agent: general-purpose
+background: false
 effort: medium
+argument-hint: "[days to look back, default 7]"
 allowed-tools: [Read, Write, Glob, Grep]
 ---
 
@@ -17,11 +20,23 @@ Analyze recent session logs, errors, and learnings to find patterns and suggest 
 - To discover workflow improvements
 - To propose new rules based on observed patterns
 
+## Why `background: false`
+
+Since Claude Code v2.1.218, a skill with `context: fork` defaults to `background: true` — the fork
+detaches and its report shows up later as a notification, not in the turn you asked. Reflection is
+a conversation starter: the report is only useful if you can immediately say "yes, create that
+rule". So this skill pins `background: false`. The fork still absorbs the cost of reading every
+daily log, but the finished report comes back inline and Step 4 below happens in the main
+conversation, where you can approve actions.
+
+**Requires Claude Code v2.1.218 or later**; older versions ignore the field and already behave this way.
+
 ## Process
 
 ### Step 1: Gather Data
 
-Read recent files (last 7 days or last 5 sessions):
+Read recent files. Default window is the last 7 days or last 5 sessions; if `$ARGUMENTS` holds a
+number, use that many days instead.
 
 ```
 memory/daily/*.md          # Session logs
@@ -90,12 +105,15 @@ Output format:
 
 ### Step 4: Offer Actions
 
-After presenting the report, ask:
+The fork produces the report and stops there — a forked subagent cannot hold a conversation. End
+the report with an explicit "Offers" block so the main conversation can put the questions to the
+user:
+
 - "Want me to create any of the suggested rules?"
 - "Should I build a skill for [repeated workflow]?"
 - "Want me to mark resolved errors in errors.md?"
 
-Only act with user approval.
+Nothing gets written outside `memory/` reports without the user saying yes.
 
 ## Constraints
 

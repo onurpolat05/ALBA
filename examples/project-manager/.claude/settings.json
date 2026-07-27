@@ -1,46 +1,103 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Read(memory/**)",
+      "Read(.claude/**)",
+      "Edit(memory/**)"
+    ],
     "ask": [
       "Bash(git push:*)",
       "Bash(git push --force:*)",
       "Bash(npm publish:*)",
-      "Write(**/*.env)"
+      "Edit(**/*.env)"
     ],
     "deny": [
       "Bash(sudo:*)",
       "Read(.env)",
-      "Write(.env)",
+      "Edit(.env)",
       "Read(**/.aws/credentials*)",
       "Read(**/.ssh/id_*)"
     ]
   },
+
   "env": {
     "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB": "1"
   },
+
   "hooks": {
     "SessionStart": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/session-start.sh", "timeout": 10}]}
-    ],
-    "PreToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/bash-validator.sh", "timeout": 5}]}
-    ],
-    "PostToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "bash .claude/hooks/error-logger.sh", "timeout": 5}]}
-    ],
-    "PostToolUseFailure": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/error-logger.sh", "timeout": 5}]}
-    ],
-    "Stop": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/memory-check.sh", "timeout": 5}]}
-    ],
-    "PreCompact": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/pre-compact.sh", "timeout": 5}]}
-    ],
-    "PostCompact": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/post-compact.sh", "timeout": 5}]}
+      {
+        "hooks": [
+          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.sh", "timeout": 10}
+        ]
+      }
     ],
     "UserPromptSubmit": [
-      {"hooks": [{"type": "command", "command": "bash .claude/hooks/agent-suggest.sh", "timeout": 3}]}
+      {
+        "hooks": [
+          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/agent-suggest.sh", "timeout": 5}
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/bash-validator.sh", "timeout": 5}
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/error-logger.sh", "timeout": 5}
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/error-logger.sh", "timeout": 5}
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/memory-check.sh", "timeout": 5}
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/session-end.sh", "timeout": 5}
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/pre-compact.sh", "timeout": 5}
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/post-compact.sh", "timeout": 5}
+        ]
+      }
     ]
   }
 }
