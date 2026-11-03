@@ -100,7 +100,10 @@ redact() {
   sed -E \
     -e 's/(Bearer|Basic|bearer|token|Token)[[:space:]]+[A-Za-z0-9._~+\/=-]{8,}/\1 [REDACTED]/g' \
     -e 's/([A-Za-z0-9_]*(KEY|TOKEN|SECRET|PASSWORD|PASSWD|Key|Token|Secret|Password|key|token|secret|password))([[:space:]]*[=:][[:space:]]*)[^[:space:]]+/\1\3[REDACTED]/g' \
-    -e 's/(sk-|sk_live_|ghp_|gho_|ghs_|github_pat_|xox[abposr]-|AKIA|AIza|glpat-)[A-Za-z0-9_-]{6,}/\1[REDACTED]/g'
+    -e 's/(sk-|sk_live_|ghp_|gho_|ghs_|github_pat_|xox[abposr]-|AKIA|AIza|glpat-)[A-Za-z0-9_-]{6,}/\1[REDACTED]/g' \
+    -e 's/("[A-Za-z0-9_]*([Pp]ass(word)?|[Ss]ecret|[Tt]oken|[Kk]ey)"[[:space:]]*:[[:space:]]*")[^"]*/\1[REDACTED]/g' \
+    -e 's/(-u[[:space:]]*[^:[:space:]]+:)[^[:space:]@]+/\1[REDACTED]/g' \
+    -e 's#(://[^:/@[:space:]]+:)[^@[:space:]]+@#\1[REDACTED]@#g'
 }
 
 if [ ! -f "$ERRORS_FILE" ]; then

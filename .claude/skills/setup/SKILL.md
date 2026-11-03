@@ -3,7 +3,7 @@ name: setup
 description: One-time bootstrap of a personal ALBA agent system - asks 7 discovery questions, then generates CLAUDE.md, the memory tree, skills, hooks, rules and .claude/settings.json. Use when the user explicitly types /setup, has just cloned ALBA, and has no CLAUDE.md yet. Do NOT use to add a single skill, hook or rule to a working setup (use /extend), and never run it against an already-configured system - it rewrites CLAUDE.md, settings.json and the memory files.
 effort: medium
 disable-model-invocation: true
-allowed-tools: [Read, Write, Edit, Glob, AskUserQuestion, "Bash(mkdir -p *)", "Bash(cp templates/*)", "Bash(chmod +x .claude/hooks/*)", "Bash(ls *)", "Bash(command -v jq)", "Bash(jq empty .claude/settings.json)", "Bash(git remote -v)"]
+allowed-tools: [Read, Write, Edit, Glob, AskUserQuestion, "Bash(mkdir -p *)", "Bash(cp templates/* .claude/*)", "Bash(chmod +x .claude/hooks/*)", "Bash(ls *)", "Bash(command -v jq)", "Bash(jq empty .claude/settings.json)", "Bash(git remote -v)"]
 ---
 
 # ALBA Interactive Setup
@@ -19,7 +19,9 @@ Create a personalized AI agent system through collaborative discovery. Ask, don'
 > **Why `allowed-tools` lists Bash commands one by one:** `allowed-tools` pre-approves, for the whole
 > setup turn, every tool it names. On a fresh clone there is no `settings.json` yet, so no deny rule
 > and no validator stands behind it. A bare `Bash` would let any command run unasked during the
-> seven questions. The list below covers exactly what this skill runs; anything else prompts.
+> seven questions. The list below names the commands this skill runs, each scoped by its first
+> arguments; anything else prompts. A `*` matches any text, so this narrows Bash rather than sealing
+> it - which is also why `.gitignore` is edited with the file tools, never with `echo >>`.
 
 ## Phase 0: Preflight
 
@@ -75,7 +77,7 @@ memory/
 ├── projects/                  # empty, ready for project contexts
 └── daily/                     # empty, session logs go here
 
-.gitignore                     # create or append (never duplicate a line that is already there):
+.gitignore                     # create or edit with Write/Edit, not the shell (never duplicate a line):
                                #   .claude/logs/            hook runtime state + error log
                                #   .claude/settings.local.json
                                #   .env  .env.*  !.env.example

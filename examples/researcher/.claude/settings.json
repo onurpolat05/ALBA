@@ -34,8 +34,7 @@
       "Read(~/.kube/config)",
       "Read(~/.docker/config.json)",
       "Read(~/.netrc)"
-    ],
-    "blockWritesOutsideWorkingDirectories": true
+    ]
   },
 
   "env": {

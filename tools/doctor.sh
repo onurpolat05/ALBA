@@ -89,7 +89,8 @@ print(" ".join(sorted(set(bad))))
   [ -n "$bad_shape" ] && fail "$f: missing inner 'hooks' array for: $bad_shape"
 
   # Referenced scripts must exist relative to the config's own .claude/ dir.
-  missing=$(python3 tools/lib/hook_scripts.py missing "$f" 2>/dev/null)
+  missing=$(python3 tools/lib/hook_scripts.py missing "$f") \
+    || fail "$f: hook_scripts.py missing-check crashed"
   [ -n "$missing" ] && fail "$f: wired to missing script(s): $missing"
 
   # Relative hook paths break the moment a session opens in a subdirectory.
@@ -107,7 +108,10 @@ print(" ".join(sorted(set(bad))))
   # Plain stdout reaches Claude on only four events. A hook registered anywhere
   # else whose script neither emits JSON output nor writes a file is a no-op.
   # ALBA shipped two of those (PreCompact, PostCompact) through v2.0.0.
-  silent=$(python3 tools/lib/hook_scripts.py silent "$f" 2>/dev/null)
+  # A crash here must fail loudly: an empty answer would read as "no problem",
+  # which is the exact silent-failure class this check exists to catch.
+  silent=$(python3 tools/lib/hook_scripts.py silent "$f") \
+    || fail "$f: hook_scripts.py silent-check crashed"
   [ -n "$silent" ] && fail "$f: stdout-only hook on an event that discards stdout: $silent"
 
   # File permission rules are matched on Edit(path) only; a Write(path) rule is
@@ -195,7 +199,7 @@ echo "7. Stale support claims"
 # necessary. What goes stale is ALBA's own claim about what it supports and
 # what it was tested against - so only those are checked.
 BASELINE="v2.1.218"
-RECOMMENDED="v2.1.314"
+RECOMMENDED="v2.1.295"
 TESTED="v2.1.317"
 # Each claim is matched on its own (-o), so a line that names the baseline and
 # a stale "verified against" version in one sentence is still caught.

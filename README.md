@@ -281,7 +281,7 @@ Or just ask naturally:
 
 ## Requirements
 
-- **Claude Code v2.1.218 or later, v2.1.314 or later recommended.** Verified against v2.1.317. Two protections in the shipped settings only take effect on newer versions — `onFailure: "block"` on the validator and `blockWritesOutsideWorkingDirectories` — and older versions skip them silently rather than failing. [Install](https://docs.claude.com/en/docs/claude-code). The floor is not arbitrary: `background` on forked skills landed in v2.1.218, and without it `/research` and `/reflect` return their answers to a background task instead of to you.
+- **Claude Code v2.1.218 or later, v2.1.295 or later recommended.** Verified against v2.1.317. On older versions the validator's `onFailure: "block"` is skipped silently rather than failing, so a validator that crashes or times out lets the command through. [Install](https://docs.claude.com/en/docs/claude-code). The floor is not arbitrary: `background` on forked skills landed in v2.1.218, and without it `/research` and `/reflect` return their answers to a background task instead of to you.
 - **Git**
 - **jq** — used by the hooks to parse event JSON. Every hook degrades to a grep fallback without it, but installing jq is one command.
 

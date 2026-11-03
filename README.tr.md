@@ -282,7 +282,7 @@ Ya da doğal bir şekilde isteyin:
 
 ## Gereksinimler
 
-- **Claude Code v2.1.218 veya üstü, v2.1.314 veya üstü önerilir.** v2.1.317 ile doğrulandı. Hazır ayarlardaki iki koruma — validator'daki `onFailure: "block"` ve `blockWritesOutsideWorkingDirectories` — yalnız yeni sürümlerde etkili olur; eski sürümler bunları hata vermeden atlar. [Kurulum](https://docs.claude.com/en/docs/claude-code). Bu taban keyfi değil: fork edilen skill'lerdeki `background` alanı v2.1.218'de geldi ve o alan olmadan `/research` ile `/reflect` cevaplarını size değil bir arka plan görevine döndürür.
+- **Claude Code v2.1.218 veya üstü, v2.1.295 veya üstü önerilir.** v2.1.317 ile doğrulandı. Eski sürümler validator'daki `onFailure: "block"` ayarını hata vermeden atlar; bu durumda çöken ya da zaman aşımına uğrayan bir validator komutu geçirir. [Kurulum](https://docs.claude.com/en/docs/claude-code). Bu taban keyfi değil: fork edilen skill'lerdeki `background` alanı v2.1.218'de geldi ve o alan olmadan `/research` ile `/reflect` cevaplarını size değil bir arka plan görevine döndürür.
 - **Git**
 - **jq** — hook'lar olay JSON'unu ayrıştırmak için kullanır. jq olmadan her hook grep tabanlı bir yedeğe düşer, ama jq kurmak tek komutluk iş.
 

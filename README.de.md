@@ -281,7 +281,7 @@ Oder fragen Sie einfach direkt:
 
 ## Voraussetzungen
 
-- **Claude Code v2.1.218 oder neuer, v2.1.314 oder neuer empfohlen.** Verifiziert gegen v2.1.317. Zwei Schutzmaßnahmen in den mitgelieferten Settings greifen erst in neueren Versionen — `onFailure: "block"` am Validator und `blockWritesOutsideWorkingDirectories` —, ältere Versionen überspringen sie stillschweigend, statt zu scheitern. [Installieren](https://docs.claude.com/en/docs/claude-code). Diese Untergrenze ist nicht willkürlich: `background` für geforkte Skills kam mit v2.1.218, und ohne dieses Feld liefern `/research` und `/reflect` ihre Antworten an einen Background-Task statt an Sie.
+- **Claude Code v2.1.218 oder neuer, v2.1.295 oder neuer empfohlen.** Verifiziert gegen v2.1.317. Ältere Versionen überspringen `onFailure: "block"` am Validator stillschweigend, statt zu scheitern; ein Validator, der abstürzt oder in ein Timeout läuft, lässt den Befehl dann durch. [Installieren](https://docs.claude.com/en/docs/claude-code). Diese Untergrenze ist nicht willkürlich: `background` für geforkte Skills kam mit v2.1.218, und ohne dieses Feld liefern `/research` und `/reflect` ihre Antworten an einen Background-Task statt an Sie.
 - **Git**
 - **jq** — wird von den Hooks zum Parsen des Event-JSON genutzt. Jeder Hook fällt ohne jq auf einen grep-Fallback zurück, aber die Installation ist ein einziger Befehl.
 

@@ -9,7 +9,7 @@ ALBA uses defense-in-depth for dangerous-command protection:
 **Layer 1 — CC-native permissions** (in `settings.json`)
 - `permissions.deny`: hard blocks — `sudo`, `.env` / `.env.*` (except `.env.example`), and credential stores in your home directory (`~/.ssh`, `~/.aws`, gcloud, kube, docker, `.netrc`)
 - `permissions.ask`: prompt before run — `git push`, `rm -rf`, `git reset --hard`, `git clean`, `chmod -R`, `chown -R`, `git log/diff --output`
-- `permissions.blockWritesOutsideWorkingDirectories`: file tools refuse paths outside the project (added in Claude Code v2.1.314; older versions ignore the key)
+- Optional, not shipped: `permissions.blockWritesOutsideWorkingDirectories: true` (added in Claude Code v2.1.314) makes file tools refuse paths outside the working directories. It is off in the template because a session opened in a subfolder would then be refused writes to the project-root `memory/`, which breaks `/end`. Turn it on if you always open the project root.
 - Claude Code's own command parsing also applies: a prefix rule cannot approve a command wrapped in `env`/`sudo`/`watch`, or `find -exec`/`-delete`. That is Claude Code's behaviour, not a rule ALBA ships.
 - Permission rules are evaluated **regardless of what a hook returns** — a hook cannot talk `permissions.deny` out of a block.
 

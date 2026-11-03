@@ -2,7 +2,7 @@
 name: end
 description: Close a work session - asks what was completed, what was learned and what comes next, then updates dashboard, todo, learnings, errors and writes memory/daily/YYYY-MM-DD.md. Use when user says "end session", "wrap up", "I'm done for today", "save progress", "let's close", "log this session". Do NOT use for a week-level retrospective (use /weekly-review) or for cross-session pattern mining (use /reflect).
 effort: medium
-allowed-tools: [Read, Write, Edit, Glob, AskUserQuestion]
+allowed-tools: [Read, Glob, AskUserQuestion]
 ---
 
 # /end - Session End

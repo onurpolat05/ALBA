@@ -5,8 +5,9 @@ Usage: python3 tools/lib/hook_scripts.py <missing|silent> <settings.json>
 missing  Print the hook scripts a settings file is wired to that do not exist
          next to it. Skipped for the template, which has no .claude/ beside it.
 silent   Print EVENT:script for every hook registered on an event that discards
-         plain stdout, when running the script prints something that is not
-         JSON. That text goes to the debug log; Claude and the user never see it.
+         plain stdout, when running the script prints something that is not a
+         JSON object - that text goes to the debug log, Claude and the user never
+         see it - or when it does not finish within 10 seconds.
 
 The silent check runs each script for real, in a throwaway fixture project
 with a stale dashboard and no daily log, so reminder-style hooks have
@@ -47,16 +48,17 @@ def prints_plain_text(script, event):
         env = dict(os.environ, CLAUDE_PROJECT_DIR=d)
         try:
             out = subprocess.run(["bash", script], input=payload, capture_output=True,
-                                 text=True, env=env, timeout=10).stdout.strip()
+                                 text=True, env=env, cwd=d, timeout=10).stdout.strip()
         except subprocess.TimeoutExpired:
-            return False
+            return "timeout"
     if not out:
-        return False
+        return None
     try:
-        json.loads(out)
-        return False
+        if isinstance(json.loads(out), dict):
+            return None
     except ValueError:
-        return True
+        pass
+    return "plain-text"
 
 
 def registrations(settings):
@@ -81,8 +83,9 @@ def main():
         elif mode == "silent" and event not in CONTEXT_EVENTS:
             candidates = [local, os.path.join("templates", "hooks", name + ".template")]
             src = next((c for c in candidates if os.path.isfile(c)), None)
-            if src and prints_plain_text(src, event):
-                out.add(f"{event}:{name}")
+            problem = prints_plain_text(src, event) if src else None
+            if problem:
+                out.add(f"{event}:{name}({problem})")
     print(" ".join(sorted(out)))
 
 

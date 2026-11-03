@@ -59,15 +59,17 @@ INPUT=$(cat 2>/dev/null) || true
 
 # Extract the command. jq is strongly preferred. The grep fallback cannot decode
 # JSON escapes: it stops at the first \" and sees a multi-line command as one
-# line, so on any payload containing an escape it would check a truncated
-# command. In that case ask instead of pretending to have checked. Install jq.
+# line, so when the command itself contains an escape it would check a
+# truncated command. In that case ask instead of pretending to have checked.
+# Only the command value is tested - other fields (a Windows cwd is full of
+# backslashes) must not turn every command into a prompt. Install jq.
 COMMAND=""
 if command -v jq >/dev/null 2>&1; then
   COMMAND=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null) || true
 else
-  case "$INPUT" in
-    *'\'*) fail_ask "jq is not installed and the command contains escapes" ;;
-  esac
+  if printf '%s' "$INPUT" | grep -qE '"command"[[:space:]]*:[[:space:]]*"[^"]*\\'; then
+    fail_ask "jq is not installed and the command contains escapes"
+  fi
   COMMAND=$(printf '%s' "$INPUT" | tr '\n' ' ' \
     | grep -oE '"command"[[:space:]]*:[[:space:]]*"[^"]*"' \
     | head -1 \
@@ -126,20 +128,21 @@ deny() {
 
 # --- Filesystem destruction ------------------------------------------------
 
-# Recursive delete aimed at the filesystem root or the home directory.
-# The target must END there ($END), which keeps `rm -rf /tmp/build` and
-# `rm -rf ~/proj` allowed. Spellings covered: / // /. /* ~ ~/ ~/. ~/* "/" '/'
-# and $HOME / ${HOME} / "$HOME" with an optional trailing / or /*.
+# Recursive delete aimed at the filesystem root or the home directory, as any
+# argument (`rm -rf build ~` too). The target must END there ($END), which
+# keeps `rm -rf /tmp/build` and `rm -rf ~/proj` allowed. Spellings covered:
+# / // /. /* ~ ~/ ~/. ~/* "/" '/' and $HOME / ${HOME} / "$HOME" with an
+# optional trailing / or /*, inside or outside the quotes.
 # The command word may be escaped or absolute: \rm, /bin/rm, /usr/bin/rm.
 RM_WORD='(\\|/bin/|/usr/bin/)?rm'
-RM_TARGET='(/|//|/\.|/\*|~|~/|~/\.|~/\*|"/"|'"'"'/'"'"'|"?\$\{?HOME\}?(/|/\*)?"?)'
-if matches "${CMD_START}${RM_WORD}[[:space:]]+(-[^[:space:]]+[[:space:]]+)*${RM_TARGET}${END}"; then
+RM_TARGET='(/|//|/\.|/\*|~|~/|~/\.|~/\*|"/"|'"'"'/'"'"'|"?\$\{?HOME\}?"?(/|/\*)?"?)'
+if matches "${CMD_START}${RM_WORD}[[:space:]]+([^;&|]*[[:space:]])?${RM_TARGET}${END}"; then
   deny "recursive delete targeting the filesystem root or home directory"
 fi
 
-# --no-preserve-root exists for exactly one purpose. No anchor needed: the flag
-# is distinctive enough that a substring match cannot be a false positive.
-if matches '--no-preserve-root'; then
+# --no-preserve-root exists for exactly one purpose - on an rm command line.
+# Anchored to rm so a commit message that mentions the flag is not denied.
+if matches "${CMD_START}${RM_WORD}[[:space:]][^;&|]*--no-preserve-root"; then
   deny "rm --no-preserve-root"
 fi
 
@@ -148,25 +151,34 @@ if matches "${CMD_START}mkfs(\.[[:alnum:]]+)?[[:space:]]"; then
   deny "mkfs would format a filesystem"
 fi
 
-# dd writing to a raw device. `dd if=...` alone is a harmless read and is no
-# longer blocked - only the destination matters.
-if matches "${CMD_START}dd[[:space:]][^;&|]*of=/dev/"; then
-  deny "dd writing directly to a device node"
+# dd writing to a disk device. `dd if=...` alone is a harmless read, and so is
+# writing to /dev/null, /dev/stdout or a tty - only a disk destination matters.
+DISK='/dev/(sd|hd|nvme|disk|rdisk|mmcblk|vd|xvd)'
+if matches "${CMD_START}dd[[:space:]][^;&|]*of=${DISK}"; then
+  deny "dd writing directly to a disk device"
 fi
 
 # Any redirect into a raw disk device.
-if matches ">[[:space:]]*/dev/(sd|hd|nvme|disk|rdisk)"; then
+if matches ">[[:space:]]*${DISK}"; then
   deny "redirect into a raw disk device"
 fi
 
 # Recursive world-writable permissions on the filesystem root, with the flags
-# in either order (`chmod -R 777 /`, `chmod 777 -R /`, `chmod -R a+rwx /`).
-CHMOD_SEG="${CMD_START}chmod([[:space:]][^;&|]*)?"
-if matches "${CHMOD_SEG}[[:space:]]-[^[:space:]]*R" \
-  && matches "${CHMOD_SEG}[[:space:]](0?777|a\+rwx)[[:space:]]" \
-  && matches "${CHMOD_SEG}[[:space:]]/${END}"; then
+# in any order (`chmod -R 777 /`, `chmod 777 -R /`, `chmod --recursive a=rwx /`).
+# Checked one command segment at a time, so `chmod -R 755 x; chmod 777 y`
+# cannot assemble a match out of two different commands. A heredoc, not a pipe,
+# feeds the loop: deny() must exit this shell, not a subshell.
+SEGMENTS=$(printf '%s' "$COMMAND" | tr ';&|' '\n\n\n')
+while IFS= read -r seg; do
+  case "$seg" in *chmod*) ;; *) continue ;; esac
+  printf '%s' "$seg" | grep -qE "^[[:space:]]*(\(|\`)?${ASSIGN}(${WRAP_ONE})*chmod[[:space:]]" || continue
+  printf '%s' "$seg" | grep -qE "[[:space:]](-[^[:space:]-]*R[^[:space:]]*|--recursive)([[:space:]]|$)" || continue
+  printf '%s' "$seg" | grep -qE "[[:space:]](0?777|[ugoa]*[+=]rwx)([[:space:]]|$)" || continue
+  printf '%s' "$seg" | grep -qE "[[:space:]]/([[:space:]]|[)\`]|$)" || continue
   deny "recursive chmod 777 on the filesystem root"
-fi
+done <<EOF
+$SEGMENTS
+EOF
 
 # --- Process / shell abuse -------------------------------------------------
 
@@ -181,7 +193,9 @@ fi
 # substitution. The remote content is unreviewable at approval time, which is
 # what makes this different from a plain curl.
 SHELL_WORD='(/usr)?(/bin/)?(ba|z|k|da)?sh'
-if matches "${CMD_START}(curl|wget)[[:space:]][^;&]*\|[[:space:]]*(sudo([[:space:]]+-[^[:space:]]+)*[[:space:]]+)?(env[[:space:]]+)?${SHELL_WORD}${END}"; then
+# A single & is allowed before the pipe (`2>&1`, `?a=1&b=2` in a URL); && and ;
+# end the curl command, so a pipe after them is not fed by the download.
+if matches "${CMD_START}(curl|wget)[[:space:]]([^;&]|&[^&])*\|[[:space:]]*(sudo([[:space:]]+-[^[:space:]]+)*[[:space:]]+)?(env[[:space:]]+)?${SHELL_WORD}${END}"; then
   deny "piping downloaded content directly into a shell"
 fi
 if matches "${CMD_START}${SHELL_WORD}[[:space:]]+<\([[:space:]]*(curl|wget)[[:space:]]"; then
@@ -192,11 +206,13 @@ fi
 
 # Force-push to a shared default branch. --force-with-lease is intentionally
 # NOT matched: it is the safe form and blocking it would push people toward the
-# unsafe one.
-if matches "${CMD_START}git[[:space:]]+push[[:space:]][^;&|]*(--force|-f)[[:space:]][^;&|]*(main|master)([[:space:]]|$)"; then
+# unsafe one. The branch must be a whole refspec side (after a space or the
+# `:` of `src:dst`), so `feat/custom-domain` is not read as `main`.
+BRANCH='[[:space:]:](refs/heads/)?(main|master)'
+if matches "${CMD_START}git[[:space:]]+push[[:space:]]([^;&|]*[[:space:]])?(--force|-f)([[:space:]][^;&|]*)?${BRANCH}${END}"; then
   deny "force push to main/master"
 fi
-if matches "${CMD_START}git[[:space:]]+push[[:space:]][^;&|]*[[:space:]](main|master)[[:space:]][^;&|]*(--force|-f)([[:space:]]|$)"; then
+if matches "${CMD_START}git[[:space:]]+push[[:space:]][^;&|]*${BRANCH}[[:space:]]([^;&|]*[[:space:]])?(--force|-f)${END}"; then
   deny "force push to main/master"
 fi
 # A leading + on a refspec is a force push without the flag.
@@ -213,20 +229,22 @@ if matches "${CMD_START}git[[:space:]]+filter-branch([[:space:]]|$)"; then
 fi
 
 # --- SQL -------------------------------------------------------------------
-# Case-insensitive here, and no command-position anchor, because these arrive
-# inside a quoted argument to psql/mysql rather than at the start of a command.
-# DROP TABLE is deliberately absent: it is routine in migrations and blocking it
-# would train people to disable this hook.
-
-if matches_sql "DROP[[:space:]]+(DATABASE|SCHEMA)[[:space:]]"; then
-  deny "DROP DATABASE/SCHEMA"
-fi
-
-# TABLE is optional in SQL (`TRUNCATE users`). The shell `truncate` command
-# takes a -s/--size flag first, so requiring a name character right after the
-# keyword keeps `truncate -s 0 file` allowed.
-if matches_sql "TRUNCATE[[:space:]]+(TABLE[[:space:]]+)?(ONLY[[:space:]]+)?[\"A-Za-z_]"; then
-  deny "TRUNCATE TABLE"
+# Only when a SQL client is part of the command: without that condition these
+# keywords match commit messages and grep needles ("drop schema validation",
+# "truncate long titles"). Client and statement are matched separately, not on
+# one line, so SQL fed through a heredoc on the next line is still caught.
+# Case-insensitive, because SQL keywords are. DROP TABLE is deliberately
+# absent: it is routine in migrations and blocking it would train people to
+# disable this hook.
+SQL_CLIENT='(^|[^[:alnum:]_-])(psql|mysql|mariadb|sqlite3|sqlcmd|duckdb|clickhouse-client|cockroach[[:space:]]+sql)([[:space:]]|$)'
+if matches_sql "$SQL_CLIENT"; then
+  if matches_sql "DROP[[:space:]]+(DATABASE|SCHEMA)[[:space:]]"; then
+    deny "DROP DATABASE/SCHEMA"
+  fi
+  # TABLE is optional in SQL (`TRUNCATE users`).
+  if matches_sql "TRUNCATE[[:space:]]+(TABLE[[:space:]]+)?(ONLY[[:space:]]+)?[\"A-Za-z_]"; then
+    deny "TRUNCATE TABLE"
+  fi
 fi
 
 # Nothing matched: no decision, the normal permission flow applies.
