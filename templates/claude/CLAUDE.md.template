@@ -60,13 +60,12 @@ Configured in `.claude/settings.json`. Adjust this table if you add or remove on
 
 | Event | Script | Purpose |
 |---|---|---|
-| SessionStart | `session-start.sh` | Load dashboard, show priorities |
+| SessionStart | `session-start.sh` | Load dashboard, show priorities; recovery steps after a compaction |
 | PreToolUse (Bash) | `bash-validator.sh` | Block destructive commands |
-| PostToolUse / PostToolUseFailure | `error-logger.sh` | Log error patterns |
+| PostToolUseFailure | `error-logger.sh` | Log failed tool calls (credentials redacted) |
 | Stop | `memory-check.sh` | Remind to save state on long sessions |
-| PreCompact | `pre-compact.sh` | Preserve critical context |
-| PostCompact | `post-compact.sh` | Prompt to reload context |
 | UserPromptSubmit | `agent-suggest.sh` | Suggest a skill by keyword |
+| SessionEnd | `session-end.sh` | Trace the session in today's log, even without `/end` |
 
 ---
 

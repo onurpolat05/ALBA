@@ -1,10 +1,9 @@
 ---
 name: setup
 description: One-time bootstrap of a personal ALBA agent system - asks 7 discovery questions, then generates CLAUDE.md, the memory tree, skills, hooks, rules and .claude/settings.json. Use when the user explicitly types /setup, has just cloned ALBA, and has no CLAUDE.md yet. Do NOT use to add a single skill, hook or rule to a working setup (use /extend), and never run it against an already-configured system - it rewrites CLAUDE.md, settings.json and the memory files.
-context: inline
 effort: medium
 disable-model-invocation: true
-allowed-tools: [Read, Write, Edit, Glob, Bash, AskUserQuestion]
+allowed-tools: [Read, Write, Edit, Glob, AskUserQuestion, "Bash(mkdir -p *)", "Bash(cp templates/* .claude/*)", "Bash(chmod +x .claude/hooks/*)", "Bash(ls *)", "Bash(command -v jq)", "Bash(jq empty .claude/settings.json)", "Bash(git remote -v)"]
 ---
 
 # ALBA Interactive Setup
@@ -16,6 +15,24 @@ Create a personalized AI agent system through collaborative discovery. Ask, don'
 > "help me get set up". The flag restricts it to an explicit `/setup` from the user, and it also
 > keeps the skill out of scheduled-task triggers and out of subagent preloading — both places where
 > an accidental run would be invisible until the damage was done.
+>
+> **Why `allowed-tools` lists Bash commands one by one:** `allowed-tools` pre-approves, for the whole
+> setup turn, every tool it names. On a fresh clone there is no `settings.json` yet, so no deny rule
+> and no validator stands behind it. A bare `Bash` would let any command run unasked during the
+> seven questions. The list below names the commands this skill runs, each scoped by its first
+> arguments; anything else prompts. A `*` matches any text, so this narrows Bash rather than sealing
+> it - which is also why `.gitignore` is edited with the file tools, never with `echo >>`.
+
+## Phase 0: Preflight
+
+Before the first question, check two things and report them in one line each:
+
+1. **jq:** run `command -v jq`. If it is missing, warn: the hooks fall back to a weaker parser, and
+   `bash-validator.sh` asks for confirmation on any command it cannot parse. Install it
+   (`brew install jq`, `apt install jq`, `winget install jqlang.jq`), or continue with that caveat.
+2. **Repository visibility:** run `git remote -v`. If there is a GitHub remote, remind the user
+   that `memory/` is committed - priorities, tasks, client names - so the repository should be
+   **private**. "Use this template" on GitHub creates a public repository unless you change it.
 
 ## Phase 1: Discovery (ask ONE question at a time)
 
@@ -60,6 +77,11 @@ memory/
 ├── projects/                  # empty, ready for project contexts
 └── daily/                     # empty, session logs go here
 
+.gitignore                     # create or edit with Write/Edit, not the shell (never duplicate a line):
+                               #   .claude/logs/            hook runtime state + error log
+                               #   .claude/settings.local.json
+                               #   .env  .env.*  !.env.example
+
 .claude/
 ├── docs/
 │   ├── memory-system.md        # from templates/claude/memory-system.md.template
@@ -87,7 +109,7 @@ as-is, no rename.
 All nine skills already ship in `.claude/skills/`. Scope decides which ones get listed in the
 generated CLAUDE.md Skills table — the rest stay on disk and can be surfaced later with `/extend`.
 
-**Minimal** (core loop): `/start`, `/end`, `/status`, `/extend`
+**Minimal** (core loop): `/start`, `/end`, `/pulse`, `/extend`
 
 **Standard adds:** `/research`, `/reflect`, `/weekly-review`, `/create-skill`
 
@@ -97,7 +119,7 @@ custom ones they describe.
 `/setup` itself is always present but is not listed as a day-to-day skill — it is a one-time
 bootstrap.
 
-If user selected "Minimal" - note: "Core skills (/start, /end, /status, /extend) are ready. Use /extend anytime to add /research, /reflect, /weekly-review, or custom skills."
+If user selected "Minimal" - note: "Core skills (/start, /end, /pulse, /extend) are ready. Use /extend anytime to add /research, /reflect, /weekly-review, or custom skills."
 
 ### 2c. Hooks (scope-based)
 
@@ -108,15 +130,17 @@ Copy hook scripts from `templates/hooks/` to `.claude/hooks/`, dropping the `.te
 - `bash-validator.sh` (PreToolUse → Bash) - blocks dangerous commands
 
 **Standard hooks** (adds):
-- `session-start.sh` (SessionStart) - load dashboard on start
+- `session-start.sh` (SessionStart) - load dashboard on start, and recovery steps after a compaction
 - `memory-check.sh` (Stop) - remind to save state
-- `error-logger.sh` (PostToolUse → Bash + PostToolUseFailure) - log error patterns from any tool
-- `pre-compact.sh` (PreCompact) - preserve context before compaction
+- `error-logger.sh` (PostToolUseFailure) - log failed tool calls, credentials redacted
 - `session-end.sh` (SessionEnd) - leave a dated trace in today's log even when `/end` is skipped
 
 **Full hooks** (Standard plus):
 - `agent-suggest.sh` (UserPromptSubmit) - suggest skills by keyword
-- `post-compact.sh` (PostCompact) - remind to re-load context after compaction
+
+There is no PreCompact or PostCompact hook, on purpose: stdout on those events never reaches
+Claude. `session-start.sh` covers compaction, because SessionStart fires again with source
+`compact` right after one.
 
 **After copying, run:** `chmod +x .claude/hooks/*.sh`
 
@@ -136,7 +160,7 @@ Which `hooks` keys to keep:
 | Scope | Keep these events |
 |-------|-------------------|
 | Minimal | `PreToolUse` |
-| Standard | `PreToolUse`, `SessionStart`, `PostToolUse`, `PostToolUseFailure`, `Stop`, `SessionEnd`, `PreCompact` |
+| Standard | `PreToolUse`, `SessionStart`, `PostToolUseFailure`, `Stop`, `SessionEnd` |
 | Full | all of them - copy the template unchanged |
 
 Leave `permissions` and `env` exactly as they are in the template, at every scope. If the user
@@ -146,8 +170,11 @@ rather than editing what is already there.
 **Three shape rules that silently break hooks if you get them wrong:**
 - Each event maps to an array of `{matcher?, hooks: [...]}` objects. The **inner** `hooks` array is
   mandatory. A flat `{"command": "..."}` parses fine and never runs.
-- Use `${CLAUDE_PROJECT_DIR}` in the command path. A relative path resolves against the session's
-  working directory, so the hook disappears the moment someone opens Claude Code in a subfolder.
+- Use `${CLAUDE_PROJECT_DIR}` in the command path, **inside double quotes** as the template writes
+  it (`bash "${CLAUDE_PROJECT_DIR}"/.claude/hooks/x.sh`). A relative path resolves against the
+  session's working directory, so the hook disappears the moment someone opens Claude Code in a
+  subfolder. An unquoted path splits on spaces: in a folder like `My Agent` bash exits 127, which
+  Claude Code treats as a non-blocking error - every hook, the validator included, silently stops.
 - Keep the `bash ` prefix on the command. Without it the script has to carry its executable bit,
   which does not survive every clone - and on Windows Git Bash there is no executable bit at all.
 
@@ -156,7 +183,7 @@ rather than editing what is already there.
 `deny: Write(.env)` looks like protection and provides none. `Edit(path)` covers every
 file-editing tool, including Write.
 
-After writing the file, verify it: `python3 -c "import json; json.load(open('.claude/settings.json'))"`
+After writing the file, verify it: `jq empty .claude/settings.json` (no output means valid JSON),
 and confirm every `command` path points at a script that exists.
 
 ### 2e. Rules (scope-based)
@@ -213,7 +240,7 @@ Run a quick check and report:
 Setup Verification:
 [x] CLAUDE.md created (XXX lines)
 [x] Memory files: dashboard.md, todo.md, learnings.md, preferences.md, errors.md
-[x] Skills: /start, /end, /status [+ /research, /weekly-review if Standard+]
+[x] Skills: /start, /end, /pulse [+ /research, /weekly-review if Standard+]
 [x] Hooks: X configured in settings.json
 [x] Rules: behavioral.md, security.md, verification.md
 [x] Agents: planner.md
@@ -225,9 +252,11 @@ Do not tick a box from memory of having written the file — check it. Hooks fai
 JSON parses and that every wired `command` points at a script that is actually on disk:
 
 ```bash
-python3 -c "import json; d=json.load(open('.claude/settings.json')); print(len(d['hooks']), 'events')"
+jq empty .claude/settings.json
 ls .claude/hooks/
 ```
+
+If jq is not installed, read the file back and check the brackets by eye instead.
 
 Report any issues found. If all good, proceed.
 
@@ -241,7 +270,7 @@ Run `/start` to test the session start workflow. Confirm it shows the priorities
 ALBA is ready!
 
 Your agent system:
-- X skills available (/start, /end, /status, ...)
+- X skills available (/start, /end, /pulse, ...)
 - X hooks active (bash safety, error logging, ...)
 - Memory initialized with your priorities
 
@@ -249,7 +278,7 @@ Next steps:
 - Use /start to begin each session
 - Use /end to close sessions and save progress
 - Use /extend to add new features anytime
-- Use /loop 30m /status for periodic reminders
+- Use /loop 30m /pulse for periodic reminders
 
 Welcome to ALBA!
 ```

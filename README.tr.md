@@ -9,7 +9,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
   <a href="https://docs.claude.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.218+-purple.svg" alt="Claude Code minimum"></a>
-  <a href="https://github.com/anthropics/claude-code/releases"><img src="https://img.shields.io/badge/Tested-v2.1.220-green.svg" alt="v2.1.220 ile test edildi"></a>
+  <a href="https://github.com/anthropics/claude-code/releases"><img src="https://img.shields.io/badge/Tested-v2.1.317-green.svg" alt="v2.1.317 ile test edildi"></a>
   <a href="https://github.com/onurpolat05/ALBA/stargazers"><img src="https://img.shields.io/github/stars/onurpolat05/ALBA?style=social" alt="Stars"></a>
 </p>
 
@@ -48,7 +48,7 @@ your-agent/
 │   └── daily/                    # Oturum günlükleri (otomatik oluşturulur)
 ├── .claude/
 │   ├── skills/                   # 9 yerleşik skill
-│   ├── hooks/                    # 8 otomatik olay işleyici
+│   ├── hooks/                    # 6 otomatik olay işleyici
 │   ├── agents/                   # Subagent tanımları
 │   ├── rules/                    # Davranış kuralları (otomatik yüklenir)
 │   ├── docs/                     # Referans dokümanları (lazy-load)
@@ -75,7 +75,7 @@ Oturumlar arasında kaybolmayan üç katmanlı, dosya tabanlı hafıza. Git ile 
 |-------|------|
 | `/start` | Oturumu başlat — bağlamı yükle, öncelikleri göster |
 | `/end` | Oturumu bitir — durumu kaydet, günlük oluştur |
-| `/status` | Hızlı bakış — görevler, engeller, son oturum |
+| `/pulse` | Hızlı bakış — görevler, engeller, son oturum |
 | `/research` | Yapılandırılmış çıktıyla web araştırması (subagent olarak çalışır) |
 | `/weekly-review` | Haftalık performans değerlendirmesi ve gelecek hafta planlaması |
 | `/extend` | İstediğiniz zaman yeni skill, hook veya kural ekleyin |
@@ -83,22 +83,20 @@ Oturumlar arasında kaybolmayan üç katmanlı, dosya tabanlı hafıza. Git ile 
 | `/create-skill` | Rehberli skill oluşturma sihirbazı |
 | `/setup` | İnteraktif ilk kurulum |
 
-### 8 Otomatik Hook
+### 6 Otomatik Hook
 
 | Claude Code olayı | Script | Ne olur |
 |---|---|---|
-| `SessionStart` | `session-start.sh` | Dashboard yüklenir, öncelikler gösterilir |
+| `SessionStart` | `session-start.sh` | Dashboard yüklenir, öncelikler gösterilir; context sıkıştırmasının hemen ardından kurtarma adımları verilir |
 | `UserPromptSubmit` | `agent-suggest.sh` | Az önce yazdığınız şey için ilgili skill önerilir |
 | `PreToolUse` | `bash-validator.sh` | Yıkıcı komut çalışmadan reddedilir |
-| `PostToolUse` | `error-logger.sh` | Bash hataları örüntü tespiti için loglanır |
-| `PostToolUseFailure` | `error-logger.sh` | Edit/Write/MCP hataları da loglanır |
+| `PostToolUseFailure` | `error-logger.sh` | Başarısız tool çağrıları örüntü tespiti için loglanır, kimlik bilgileri maskelenir |
 | `Stop` | `memory-check.sh` | Durumu kaydetme hatırlatması — hız sınırlı, her turda değil |
 | `SessionEnd` | `session-end.sh` | `/end` yazmayı atlasanız bile bugünün günlüğüne olgusal bir iz düşer |
-| `PreCompact` / `PostCompact` | `pre-compact.sh`, `post-compact.sh` | Öncelikler context sıkıştırmasından sağ çıkar |
 
-Dokuz kayıt, sekiz script — `error-logger.sh` iki tool-hatası olayına birden bağlıdır.
+Altı script, her biri tek bir olaya bağlı. `PreCompact`/`PostCompact` hook'u bilinçli olarak yok: bu olaylarda düz stdout Claude'a değil debug log'a gider. ALBA v2.0.0'a kadar bu türden iki hook taşıdı ve ikisi de hiçbir zaman bir şey yapmadı. Sıkıştırmadan sonra Claude Code `SessionStart`'ı `compact` kaynağıyla yeniden tetikler, kurtarmayı `session-start.sh` üstlenir.
 
-**Validator hakkında:** gerçekten yıkıcı olan kısa bir komut listesini reddeder, geri kalan her şeyde sessiz kalır. Sessiz derken *gerçekten* sessiz — çıktı yok, exit 0, normal izin akışı. `"allow"` yanıtı dönen bir `PreToolUse` hook'u izin promptunuzu tamamen atlar; dolayısıyla blocklist'inin kaçırdığı her şeyi onaylayan bir validator güvenlik ağı değil, bir deliktir. ALBA bu deliği v2.0.0'a kadar taşıdı.
+**Validator hakkında:** gerçekten yıkıcı olan kısa bir komut listesini reddeder, geri kalan her şeyde sessiz kalır. Sessiz derken *gerçekten* sessiz — çıktı yok, exit 0, normal izin akışı. `"allow"` yanıtı dönen bir `PreToolUse` hook'u izin promptunuzu tamamen atlar; dolayısıyla blocklist'inin kaçırdığı her şeyi onaylayan bir validator güvenlik ağı değil, bir deliktir. ALBA bu deliği v2.0.0'a kadar taşıdı. Validator'ı kazalara karşı bir hız tümseği olarak düşünün, güvenlik sınırı olarak değil: bir blocklist'in yakalayamadıkları dosyanın başında yazılı, kontrol edildiği vakalar `tools/test-validator.sh` içinde. Gerçek bir sınır için Claude Code'un sandbox'ını kullanın.
 
 ### Kendini Geliştirme
 
@@ -118,7 +116,7 @@ CLAUDE.md 200 satırın altında kalır. Sistem dokümanları yalnızca ihtiyaç
 
 ### Seçenek 1: GitHub Template (Önerilen)
 
-GitHub'da **"Use this template"** butonuna tıklayın, ardından:
+GitHub'da **"Use this template"** butonuna tıklayın ve **Private seçin** — `memory/` commit'lenir; öncelikleriniz, görevleriniz ve müşteri adlarınız orada durur. Ardından:
 
 ```bash
 git clone https://github.com/YOUR-USERNAME/YOUR-REPO.git my-agent
@@ -155,7 +153,7 @@ Sabah:
 
 Çalışma sırasında:
   "research multi-agent patterns"    # /research subagent olarak çalışır
-  "durumum ne?"                      # /status hızlı bakış gösterir
+  "durumum ne?"                      # /pulse hızlı bakış gösterir
 
 Gün sonu:
   /end                      # İlerlemeyi kaydeder, öğrenimleri not eder, günlük oluşturur
@@ -165,7 +163,7 @@ Cuma:
 
 Her zaman:
   /extend                   # "İçerik oluşturma skill'i istiyorum" → oluşturur
-  /loop 30m /status         # Periyodik hatırlatmalar, oturum kapsamlı
+  /loop 30m /pulse         # Periyodik hatırlatmalar, oturum kapsamlı
 ```
 
 ---
@@ -178,7 +176,7 @@ Her zaman:
 | Kurulum deneyimi | Manuel yapılandırma | Kopyala-yapıştır | İnteraktif sihirbaz (7 soru) |
 | Rol desteği | Genel | Sadece geliştirici | Her rol (5 örnek dahil) |
 | Kendini geliştirme | Hayır | Hayır | Otomatik hata + öğrenim yakalama |
-| Hook'lar | Manuel kurulum | Bazı şablonlar | 8 hook, otomatik yapılandırılmış |
+| Hook'lar | Manuel kurulum | Bazı şablonlar | 6 hook, otomatik yapılandırılmış |
 | Skill'ler | Yerleşik yok | Değişken | 9 yerleşik, genişletilebilir |
 | Context verimliliği | N/A | N/A | Progressive disclosure (< 200 satır) |
 | Config sağlık kontrolü | `/doctor` (kurulumunuz) | Hayır | `tools/doctor.sh` (config'in kendisi) |
@@ -238,7 +236,7 @@ LOGS (otomatik)       →  memory/daily/YYYY-MM-DD.md
 
 ### Hook Sistemi
 
-Hook'lar, Claude Code olayları tarafından tetiklenen ve `.claude/settings.json` içinde bağlanan bash script'leridir. Otomatik çalışırlar — manuel çağırma gerekmez. Claude Code 30 hook olayı sunuyor; ALBA bunlardan dokuzunu kullanıyor ve hepsini [`templates/hooks/README-hooks.md`](templates/hooks/README-hooks.md) içinde belgeliyor.
+Hook'lar, Claude Code olayları tarafından tetiklenen ve `.claude/settings.json` içinde bağlanan bash script'leridir. Otomatik çalışırlar — manuel çağırma gerekmez. Claude Code 33 hook olayı sunuyor; ALBA bunlardan altısını kullanıyor ve hepsini [`templates/hooks/README-hooks.md`](templates/hooks/README-hooks.md) içinde belgeliyor.
 
 Hook'lar sessizce ölür. Yanlış yazılmış bir olay adı, eksik bir iç `hooks` dizisi, alt dizinden açılan bir oturumda kırılan göreli yol — bunların hiçbiri hata üretmez. Özellik yalnızca hiç gerçekleşmez. `tools/doctor.sh` tam olarak bunun için var.
 
@@ -284,13 +282,13 @@ Ya da doğal bir şekilde isteyin:
 
 ## Gereksinimler
 
-- **Claude Code v2.1.218 veya üstü.** v2.1.220 ile doğrulandı. [Kurulum](https://docs.claude.com/en/docs/claude-code). Bu taban keyfi değil: fork edilen skill'lerdeki `background` alanı v2.1.218'de geldi ve o alan olmadan `/research` ile `/reflect` cevaplarını size değil bir arka plan görevine döndürür.
+- **Claude Code v2.1.218 veya üstü, v2.1.295 veya üstü önerilir.** v2.1.317 ile doğrulandı. Eski sürümler validator'daki `onFailure: "block"` ayarını hata vermeden atlar; bu durumda çöken ya da zaman aşımına uğrayan bir validator komutu geçirir. [Kurulum](https://docs.claude.com/en/docs/claude-code). Bu taban keyfi değil: fork edilen skill'lerdeki `background` alanı v2.1.218'de geldi ve o alan olmadan `/research` ile `/reflect` cevaplarını size değil bir arka plan görevine döndürür.
 - **Git**
 - **jq** — hook'lar olay JSON'unu ayrıştırmak için kullanır. jq olmadan her hook grep tabanlı bir yedeğe düşer, ama jq kurmak tek komutluk iş.
 
 MCP sunucuları opsiyonel iyileştirmelerdir — ALBA tamamen bağımsız çalışır.
 
-Claude Code'u güncelliyor musunuz? `tools/doctor.sh` çalıştırın. Sürümler arasında sessizce bozulan şeyleri kontrol eder: hook olay adları, settings şeması, ölü script yolları.
+Claude Code'u güncelliyor musunuz? `tools/doctor.sh` çalıştırın. Sürümler arasında sessizce bozulan şeyleri kontrol eder: hook olay adları, settings şeması, ölü script yolları ve çıktısı artık Claude'a ulaşmayan hook'lar. Claude Code'un kendi `/doctor prompt-audit` komutu da eski modeller için yazılmış prompt kalıplarını işaretleyerek bunu tamamlar.
 
 ---
 

@@ -1,31 +1,39 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git status:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(git branch:*)",
-      "Bash(ls:*)",
-      "Bash(cat:*)",
-      "Bash(head:*)",
-      "Bash(tail:*)",
-      "Bash(wc:*)",
       "Read(memory/**)",
       "Read(.claude/**)",
       "Edit(memory/**)"
     ],
     "ask": [
       "Bash(git push:*)",
-      "Bash(git push --force:*)",
       "Bash(npm publish:*)",
+      "Bash(git log *--output*)",
+      "Bash(git diff *--output*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean *)",
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
+      "Bash(chmod -R *)",
+      "Bash(chown -R *)",
       "Edit(**/*.env)"
     ],
     "deny": [
       "Bash(sudo:*)",
       "Read(.env)",
+      "Read(.env.*)",
+      "Read(!.env.example)",
       "Edit(.env)",
-      "Read(**/.aws/credentials*)",
-      "Read(**/.ssh/id_*)"
+      "Edit(.env.*)",
+      "Edit(!.env.example)",
+      "Read(~/.ssh/**)",
+      "Edit(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Edit(~/.aws/**)",
+      "Read(~/.config/gcloud/**)",
+      "Read(~/.kube/config)",
+      "Read(~/.docker/config.json)",
+      "Read(~/.netrc)"
     ]
   },
 
@@ -37,14 +45,14 @@
     "SessionStart": [
       {
         "hooks": [
-          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.sh", "timeout": 10}
+          {"type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/session-start.sh", "timeout": 10}
         ]
       }
     ],
     "UserPromptSubmit": [
       {
         "hooks": [
-          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/agent-suggest.sh", "timeout": 5}
+          {"type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/agent-suggest.sh", "timeout": 5}
         ]
       }
     ],
@@ -52,50 +60,28 @@
       {
         "matcher": "Bash",
         "hooks": [
-          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/bash-validator.sh", "timeout": 5}
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/error-logger.sh", "timeout": 5}
+          {"type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/bash-validator.sh", "timeout": 5, "onFailure": "block"}
         ]
       }
     ],
     "PostToolUseFailure": [
       {
         "hooks": [
-          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/error-logger.sh", "timeout": 5}
+          {"type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/error-logger.sh", "timeout": 5}
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/memory-check.sh", "timeout": 5}
+          {"type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/memory-check.sh", "timeout": 5}
         ]
       }
     ],
     "SessionEnd": [
       {
         "hooks": [
-          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/session-end.sh", "timeout": 5}
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "hooks": [
-          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/pre-compact.sh", "timeout": 5}
-        ]
-      }
-    ],
-    "PostCompact": [
-      {
-        "hooks": [
-          {"type": "command", "command": "bash ${CLAUDE_PROJECT_DIR}/.claude/hooks/post-compact.sh", "timeout": 5}
+          {"type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/session-end.sh", "timeout": 5}
         ]
       }
     ]

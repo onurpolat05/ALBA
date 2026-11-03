@@ -61,11 +61,11 @@ Read relevant files only when needed. Don't load everything into context.
 
 | Skill | Purpose | Context |
 |-------|---------|---------|
-| `/start` | Begin session, load context, show content priorities | inline |
-| `/end` | End session, save state, create summary | inline |
-| `/status` | Quick status on content pipeline | inline |
+| `/start` | Begin session, load context, show content priorities | main |
+| `/end` | End session, save state, create summary | main |
+| `/pulse` | Quick status on content pipeline | main |
 | `/research` | Content research and trend analysis | fork |
-| `/weekly-review` | Weekly content performance review | inline |
+| `/weekly-review` | Weekly content performance review | main |
 
 ---
 
@@ -99,16 +99,14 @@ Automated responses to Claude Code events. Wired in `.claude/settings.json`, scr
 
 | Event | Script | Purpose |
 |-------|--------|---------|
-| `SessionStart` | `session-start.sh` | Load dashboard, show priorities |
+| `SessionStart` | `session-start.sh` | Load dashboard, show priorities; recovery steps after a compaction |
 | `UserPromptSubmit` | `agent-suggest.sh` | Suggest a relevant skill |
 | `PreToolUse` | `bash-validator.sh` | Deny destructive commands |
-| `PostToolUse` | `error-logger.sh` | Log Bash failures |
-| `PostToolUseFailure` | `error-logger.sh` | Log Edit/Write/MCP failures |
+| `PostToolUseFailure` | `error-logger.sh` | Log failed tool calls, credentials redacted |
 | `Stop` | `memory-check.sh` | Remind to save state (rate-limited) |
 | `SessionEnd` | `session-end.sh` | Trace the session in today's log |
-| `PreCompact` / `PostCompact` | `pre-compact.sh`, `post-compact.sh` | Carry priorities through compaction |
 
-Eight scripts, nine registrations - `error-logger.sh` is wired to both failure events.
+Six scripts, one event each. Compaction recovery lives in `session-start.sh`: SessionStart fires again with source `compact`, and its output reaches Claude - PreCompact/PostCompact output does not.
 
 ---
 

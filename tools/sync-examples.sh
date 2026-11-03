@@ -80,6 +80,20 @@ for role in $ROLES; do
     name="$(basename "$tpl" .template)"
     sync_file "$tpl" "$base/hooks/$name"
   done
+  # A hook whose template was deleted must leave the examples too. Copying
+  # alone never removes anything, so v2.1.0's removed compaction hooks would
+  # otherwise have lingered in every role.
+  for hook in "$base"/hooks/*.sh; do
+    [ -e "$hook" ] || continue
+    [ -f "templates/hooks/$(basename "$hook").template" ] && continue
+    if [ "$CHECK_ONLY" -eq 1 ]; then
+      echo "  STALE:   $hook (no template)"
+      DRIFT=$((DRIFT + 1))
+    else
+      rm -f -- "$hook"
+      echo "  removed: $hook (no template)"
+    fi
+  done
 
   # Docs: templates/claude/x.md.template -> .claude/docs/x.md
   for doc in $DOC_TEMPLATES; do

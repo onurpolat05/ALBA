@@ -9,7 +9,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
   <a href="https://docs.claude.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.218+-purple.svg" alt="Claude Code minimum"></a>
-  <a href="https://github.com/anthropics/claude-code/releases"><img src="https://img.shields.io/badge/Tested-v2.1.220-green.svg" alt="Tested with v2.1.220"></a>
+  <a href="https://github.com/anthropics/claude-code/releases"><img src="https://img.shields.io/badge/Tested-v2.1.317-green.svg" alt="Tested with v2.1.317"></a>
   <a href="https://github.com/onurpolat05/ALBA/stargazers"><img src="https://img.shields.io/github/stars/onurpolat05/ALBA?style=social" alt="Stars"></a>
 </p>
 
@@ -48,7 +48,7 @@ your-agent/
 │   └── daily/                    # Session logs (auto-created)
 ├── .claude/
 │   ├── skills/                   # 9 built-in skills
-│   ├── hooks/                    # 8 automated event handlers
+│   ├── hooks/                    # 6 automated event handlers
 │   ├── agents/                   # Subagent definitions
 │   ├── rules/                    # Behavioral guidelines (auto-loaded)
 │   ├── docs/                     # Reference docs (lazy-loaded)
@@ -74,7 +74,7 @@ Three-tier file-based memory that survives across sessions. Git-tracked, human-r
 |-------|---------|
 | `/start` | Begin session — load context, show priorities |
 | `/end` | End session — save state, create daily log |
-| `/status` | Quick overview — tasks, blockers, last session |
+| `/pulse` | Quick overview — tasks, blockers, last session |
 | `/research` | Web research with structured output (runs as subagent) |
 | `/weekly-review` | Weekly performance review and next-week planning |
 | `/extend` | Add new skills, hooks, or rules anytime |
@@ -82,22 +82,20 @@ Three-tier file-based memory that survives across sessions. Git-tracked, human-r
 | `/create-skill` | Guided skill creation wizard |
 | `/setup` | Interactive first-time setup |
 
-### 8 Automated Hooks
+### 6 Automated Hooks
 
 | Claude Code event | Script | What happens |
 |---|---|---|
-| `SessionStart` | `session-start.sh` | Dashboard loads, priorities shown |
+| `SessionStart` | `session-start.sh` | Dashboard loads, priorities shown — and recovery steps right after a compaction |
 | `UserPromptSubmit` | `agent-suggest.sh` | Relevant skill suggested for what you just typed |
 | `PreToolUse` | `bash-validator.sh` | Destructive command denied before it runs |
-| `PostToolUse` | `error-logger.sh` | Bash failures logged for pattern detection |
-| `PostToolUseFailure` | `error-logger.sh` | Edit/Write/MCP failures logged too |
+| `PostToolUseFailure` | `error-logger.sh` | Failed tool calls logged for pattern detection, credentials redacted |
 | `Stop` | `memory-check.sh` | Reminder to save state — rate-limited, not every turn |
 | `SessionEnd` | `session-end.sh` | Factual trace in today's log even if you skip `/end` |
-| `PreCompact` / `PostCompact` | `pre-compact.sh`, `post-compact.sh` | Priorities survive context compaction |
 
-Nine registrations, eight scripts — `error-logger.sh` is wired to both tool-failure events.
+Six scripts, one event each. There is no `PreCompact`/`PostCompact` hook on purpose: plain stdout on those events goes to the debug log, never to Claude. ALBA shipped two such hooks through v2.0.0 and neither ever did anything. After a compaction Claude Code fires `SessionStart` again with source `compact`, so `session-start.sh` handles recovery.
 
-**On the validator:** it denies a short list of genuinely destructive commands and stays silent on everything else. Silent means *silent* — no output, exit 0, normal permission flow. A `PreToolUse` hook that answers `"allow"` skips your permission prompt entirely, so a validator that approves whatever its blocklist missed is not a safety net, it is a hole. ALBA shipped that hole until v2.0.0.
+**On the validator:** it denies a short list of genuinely destructive commands and stays silent on everything else. Silent means *silent* — no output, exit 0, normal permission flow. A `PreToolUse` hook that answers `"allow"` skips your permission prompt entirely, so a validator that approves whatever its blocklist missed is not a safety net, it is a hole. ALBA shipped that hole until v2.0.0. Treat the validator as a speed bump against accidents, not a security boundary: its header lists what a blocklist cannot catch, and `tools/test-validator.sh` holds the cases it is checked against. For a real boundary, use Claude Code's sandbox.
 
 ### Self-Improvement
 
@@ -117,7 +115,7 @@ CLAUDE.md stays under 200 lines. System docs lazy-load only when needed — keep
 
 ### Option 1: GitHub Template (Recommended)
 
-Click **"Use this template"** on GitHub, then:
+Click **"Use this template"** on GitHub and **choose Private** — `memory/` is committed, and it will hold your priorities, tasks and client names. Then:
 
 ```bash
 git clone https://github.com/YOUR-USERNAME/YOUR-REPO.git my-agent
@@ -154,7 +152,7 @@ Morning:
 
 During work:
   "research multi-agent patterns"    # /research runs as subagent
-  "what's my status?"                # /status shows quick overview
+  "what's my status?"                # /pulse shows quick overview
 
 End of day:
   /end                      # Saves progress, records learnings, creates daily log
@@ -164,7 +162,7 @@ Friday:
 
 Anytime:
   /extend                   # "I want a content creation skill" → builds it
-  /loop 30m /status         # Periodic reminders, session-scoped
+  /loop 30m /pulse         # Periodic reminders, session-scoped
 ```
 
 ---
@@ -177,7 +175,7 @@ Anytime:
 | Setup experience | Manual config | Copy-paste | Interactive wizard (7 questions) |
 | Role support | Generic | Developer-only | Any role (5 examples included) |
 | Self-improvement | No | No | Auto error + learning capture |
-| Hooks | Manual setup | Some templates | 8 hooks, auto-configured |
+| Hooks | Manual setup | Some templates | 6 hooks, auto-configured |
 | Skills | None built-in | Varies | 9 built-in, extensible |
 | Context efficiency | N/A | N/A | Progressive disclosure (< 200 lines) |
 | Config health check | `/doctor` (your install) | No | `tools/doctor.sh` (the config itself) |
@@ -237,7 +235,7 @@ LOGS (auto-created)   →  memory/daily/YYYY-MM-DD.md
 
 ### Hook System
 
-Hooks are bash scripts triggered by Claude Code events, wired in `.claude/settings.json`. They run automatically — no manual invocation needed. Claude Code exposes 30 hook events; ALBA uses nine and documents all of them in [`templates/hooks/README-hooks.md`](templates/hooks/README-hooks.md).
+Hooks are bash scripts triggered by Claude Code events, wired in `.claude/settings.json`. They run automatically — no manual invocation needed. Claude Code exposes 33 hook events; ALBA uses six and documents all of them in [`templates/hooks/README-hooks.md`](templates/hooks/README-hooks.md).
 
 Hooks fail quietly. A misspelled event name, a missing inner `hooks` array, a relative path that breaks when you open a session in a subdirectory — none of these produce an error. The feature just never happens. That is what `tools/doctor.sh` is for.
 
@@ -283,13 +281,13 @@ Or just ask naturally:
 
 ## Requirements
 
-- **Claude Code v2.1.218 or later.** Verified against v2.1.220. [Install](https://docs.claude.com/en/docs/claude-code). The floor is not arbitrary: `background` on forked skills landed in v2.1.218, and without it `/research` and `/reflect` return their answers to a background task instead of to you.
+- **Claude Code v2.1.218 or later, v2.1.295 or later recommended.** Verified against v2.1.317. On older versions the validator's `onFailure: "block"` is skipped silently rather than failing, so a validator that crashes or times out lets the command through. [Install](https://docs.claude.com/en/docs/claude-code). The floor is not arbitrary: `background` on forked skills landed in v2.1.218, and without it `/research` and `/reflect` return their answers to a background task instead of to you.
 - **Git**
 - **jq** — used by the hooks to parse event JSON. Every hook degrades to a grep fallback without it, but installing jq is one command.
 
 MCP servers are optional enhancements — ALBA works fully standalone.
 
-Upgrading Claude Code? Run `tools/doctor.sh`. It checks the things that break silently across versions: hook event names, settings schema, dead script paths.
+Upgrading Claude Code? Run `tools/doctor.sh`. It checks the things that break silently across versions: hook event names, settings schema, dead script paths, and hooks whose output no longer reaches Claude. Claude Code's own `/doctor prompt-audit` complements it by flagging prompt patterns written for older models.
 
 ---
 

@@ -39,7 +39,7 @@ developer/
 
 ### 1. ALBA Template Format (CLAUDE.md)
 - Skill frontmatter (`name`, `description`, `context`, `background`, `effort`, `allowed-tools`)
-- Hooks table (8 event handlers, 9 registrations)
+- Hooks table (6 event handlers)
 - Rules auto-loaded from `.claude/rules/`
 - Progressive disclosure for efficient context loading
 - Three-tier memory system (hot/warm/cold)
@@ -56,7 +56,7 @@ Available skills in this example:
 | `/research` | Web research using Exa + Firecrawl MCP |
 | `/start` | Begin session, load dashboard |
 | `/end` | End session, save state |
-| `/status` | Quick status overview |
+| `/pulse` | Quick status overview |
 | `/extend` | Add new features interactively |
 | `/reflect` | Cross-session pattern analysis |
 
@@ -72,9 +72,9 @@ Automated scripts that respond to Claude Code events:
 | SessionStart | Load context, show dashboard |
 | Stop | Remind to save state |
 | PreToolUse | Block dangerous commands |
-| PostToolUse | Log error patterns |
+| PostToolUseFailure | Log failed tool calls |
 | UserPromptSubmit | Suggest relevant agents |
-| PreCompact | Preserve critical context |
+| SessionEnd | Trace the session in today's log |
 
 ### 5. Memory System
 - `memory/state/dashboard.md` - Current priorities, active projects, deadlines

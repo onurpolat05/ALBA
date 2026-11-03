@@ -6,7 +6,7 @@ agent: general-purpose
 background: false
 effort: medium
 argument-hint: "[days to look back, default 7]"
-allowed-tools: [Read, Write, Glob, Grep]
+allowed-tools: [Read, Glob, Grep]
 ---
 
 # ALBA Reflect

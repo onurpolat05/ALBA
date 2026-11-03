@@ -44,6 +44,13 @@ if [ -z "$PROMPT" ]; then
   exit 0
 fi
 
+# Since Claude Code v2.1.299, UserPromptSubmit runs BEFORE a skill or slash
+# command expands, so this hook sees the raw "/research ..." text. Without this
+# guard it would tip the user about the very skill they just invoked.
+case "$PROMPT" in
+  /*) exit 0 ;;
+esac
+
 # Lowercase for matching. Note: tr does not fold Turkish I/i correctly, so the
 # patterns below spell out both variants where it matters.
 PROMPT_LOWER=$(printf '%s' "$PROMPT" | tr '[:upper:]' '[:lower:]')
@@ -54,15 +61,16 @@ if printf '%s' "$PROMPT_LOWER" | grep -qE "ara[sş]t[iı]r|research|investigate|
   exit 0
 fi
 
-# Planning (Turkish: planla)
+# Planning (Turkish: planla). /plan is a built-in Claude Code command.
 if printf '%s' "$PROMPT_LOWER" | grep -qE "planla|plan.*(break|task|step)|architect.*system|design.*system"; then
-  echo "Tip: consider /plan for task breakdown and architecture."
+  echo "Tip: /plan (or Shift+Tab) lets Claude map the work before changing anything."
   exit 0
 fi
 
-# Code review
+# Code review. /code-review is built into Claude Code; ALBA ships no
+# code-reviewer agent, which the old tip pointed at.
 if printf '%s' "$PROMPT_LOWER" | grep -qE "review.*(code|pr|quality)|audit.*(security|code)|check.*quality"; then
-  echo "Tip: consider a code-reviewer agent for a thorough pass."
+  echo "Tip: /code-review runs a review of the current diff."
   exit 0
 fi
 

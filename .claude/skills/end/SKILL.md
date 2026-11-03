@@ -1,9 +1,8 @@
 ---
 name: end
 description: Close a work session - asks what was completed, what was learned and what comes next, then updates dashboard, todo, learnings, errors and writes memory/daily/YYYY-MM-DD.md. Use when user says "end session", "wrap up", "I'm done for today", "save progress", "let's close", "log this session". Do NOT use for a week-level retrospective (use /weekly-review) or for cross-session pattern mining (use /reflect).
-context: inline
 effort: medium
-allowed-tools: [Read, Write, Edit, Glob, AskUserQuestion]
+allowed-tools: [Read, Glob, AskUserQuestion]
 ---
 
 # /end - Session End
@@ -38,7 +37,9 @@ Close the session with a structured 3-question protocol. Save state for next ses
 ```
 
 **Errors** (`memory/knowledge/errors.md`):
-- Check `memory/knowledge/errors_raw.log` for new entries from this session
+- Check `.claude/logs/errors_raw.log` for new entries from this session. Summarize the *pattern*;
+  never copy a logged command into `errors.md`. The raw log is machine-local, while `errors.md` is
+  git-tracked, and a failed command can carry a credential the redaction missed.
 - If errors were resolved during the session, consolidate them into `errors.md`:
 ```markdown
 ## [Error Type] - YYYY-MM-DD

@@ -2,7 +2,7 @@
 
 Claude Code has its own automatic memory. ALBA has `memory/`. They are separate systems that happen to share a word, and they do not conflict — but knowing which one a given fact belongs in is what keeps both useful.
 
-Verified against Claude Code v2.1.220.
+Verified against Claude Code v2.1.317.
 
 ## Two Systems
 

@@ -1,7 +1,6 @@
 ---
 name: create-skill
 description: Create one new skill end to end - asks about purpose, trigger phrases, tools and context, then writes .claude/skills/<name>/SKILL.md with valid frontmatter and registers it in CLAUDE.md. Use when user says "create a skill", "make a slash command for this", "turn this workflow into a skill", "new skill for X". Do NOT use for hooks, rules or MCP integrations (use /extend), and do NOT use to change an existing skill - edit that SKILL.md directly.
-context: inline
 effort: medium
 argument-hint: "[skill-name]"
 allowed-tools: [Read, Write, Edit, AskUserQuestion]
@@ -32,8 +31,9 @@ Ask these questions (one at a time):
 Based on answers, decide:
 
 **Context:**
-- `inline` - Quick operations that need conversation context (< 1 min), or anything that asks the
-  user a question
+- omit `context` - the skill runs in the main conversation: quick operations that need
+  conversation context (< 1 min), or anything that asks the user a question. (`context: inline` is
+  not a valid value; leave the field out.)
 - `fork` - Heavy operations that should run as a subagent (research, log analysis, wide file
   sweeps). A fork keeps its own reading out of the main context window.
 
@@ -46,7 +46,11 @@ the default only for genuinely fire-and-forget work. (`background` needs Claude 
 - Read, Write, Edit, Glob, Grep (file operations)
 - WebSearch, WebFetch (web access)
 - Bash (system commands)
-- AskUserQuestion (user interaction - only works with `inline`; a fork has no one to ask)
+- AskUserQuestion (user interaction - main-conversation skills only; a fork has no one to ask)
+
+`allowed-tools` **pre-approves** the listed tools for the turn; it does not restrict. Scope write and
+shell access (`Edit(memory/<dir>/**)`, `Bash(<command> *)`) rather than listing bare `Write` or
+`Bash`, especially if the skill reads web pages or other untrusted text.
 
 **Optional fields worth considering:** `argument-hint` if the skill takes arguments,
 `disable-model-invocation: true` if firing it by accident would damage something,
@@ -61,8 +65,8 @@ Create `.claude/skills/[name]/SKILL.md`:
 ---
 name: [skill-name]
 description: [what it does]. Use when user says "[phrase]", "[phrase]", "[phrase]". Do NOT use for [nearest neighbour / wrong trigger].
-context: [inline or fork]
-background: false        # fork only - drop this line for inline skills
+context: fork            # fork only - omit this line to run in the main conversation
+background: false        # fork only - drop this line too when you drop context
 effort: [low|medium|high]
 allowed-tools: [Read, Write, ...]
 ---
@@ -101,7 +105,7 @@ whether to invoke the skill — the body is loaded *after* the decision is made.
 Add entry to the Skills table in CLAUDE.md:
 
 ```markdown
-| /[name] | [Description] | [inline/fork] |
+| /[name] | [Description] | [main/fork] |
 ```
 
 ### Step 5: Test
