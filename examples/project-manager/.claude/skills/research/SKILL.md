@@ -6,7 +6,7 @@ agent: general-purpose
 background: false
 effort: medium
 argument-hint: <topic> [deep]
-allowed-tools: [Read, Write, Glob, Grep, WebSearch, WebFetch, mcp__exa__web_search_exa, mcp__firecrawl__firecrawl_search, mcp__firecrawl__firecrawl_scrape]
+allowed-tools: [Read, Glob, Grep, WebSearch, WebFetch, mcp__exa__web_search_exa, mcp__firecrawl__firecrawl_search, mcp__firecrawl__firecrawl_scrape]
 ---
 
 # /research - Web Research
@@ -26,6 +26,14 @@ If you copy this skill into a workflow where you genuinely want fire-and-forget 
 
 **Requires Claude Code v2.1.218 or later.** On older versions the field is ignored and the skill
 runs inline-blocking as it always did.
+
+## Why there is no `Write` in `allowed-tools`
+
+`allowed-tools` pre-approves a tool for the whole turn, with no prompt. This skill reads web pages
+anyone can write, so a pre-approved bare `Write` would let an injected instruction rewrite
+`CLAUDE.md` or a source file unasked. Saving a deep report still works without it: the shipped
+`settings.json` allows `Edit(memory/**)`, which covers every file-writing tool inside `memory/`.
+Anything outside `memory/` asks first, which is the point.
 
 ## Input
 

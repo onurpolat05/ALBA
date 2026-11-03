@@ -1,10 +1,21 @@
 #!/bin/bash
 
 # ALBA - Error Logger Hook
-# Events: PostToolUse (matcher: Bash) + PostToolUseFailure (any tool)
-# Purpose: Log error patterns and slow tool calls so /reflect has raw material.
+# Event: PostToolUseFailure (any tool)
+# Purpose: Log failed tool calls so /reflect has raw material.
 #
 # Captures: timestamp | tool | command (Bash) or error | exit_code | duration_ms
+#
+# Why not PostToolUse as well: a Bash command that fails already fires
+# PostToolUseFailure. ALBA <= v2.0.0 also registered this script on PostToolUse
+# (matcher Bash), where the payload has no exit code - so every *successful*
+# command that wrote to stderr (git push progress, curl, npm) was logged as an
+# error.
+#
+# Secrets: a failed command often carries a token on its command line. Values
+# that look like credentials are replaced with [REDACTED] before anything is
+# written. The redaction is pattern-based and therefore best-effort; the log
+# stays machine-local (.claude/logs/ is gitignored) for that reason.
 #
 # Writes to: .claude/logs/errors_raw.log
 #   NOTE FOR SETUP: add `.claude/logs/` to your .gitignore. This is machine-local
@@ -77,6 +88,21 @@ HEADER_2="# Format: timestamp | tool | detail | exit_code | duration_ms"
 
 mkdir -p "$LOG_DIR" 2>/dev/null || true
 
+# Never write through a symlink: a planted link would turn this append into a
+# write to an arbitrary file (a shell rc file, authorized_keys).
+if [ -L "$LOG_DIR" ] || [ -L "$ERRORS_FILE" ]; then
+  exit 0
+fi
+
+# Best-effort credential redaction. BSD sed has no case-insensitive flag, so the
+# common spellings are listed explicitly.
+redact() {
+  sed -E \
+    -e 's/(Bearer|Basic|bearer|token|Token)[[:space:]]+[A-Za-z0-9._~+\/=-]{8,}/\1 [REDACTED]/g' \
+    -e 's/([A-Za-z0-9_]*(KEY|TOKEN|SECRET|PASSWORD|PASSWD|Key|Token|Secret|Password|key|token|secret|password))([[:space:]]*[=:][[:space:]]*)[^[:space:]]+/\1\3[REDACTED]/g' \
+    -e 's/(sk-|sk_live_|ghp_|gho_|ghs_|github_pat_|xox[abposr]-|AKIA|AIza|glpat-)[A-Za-z0-9_-]{6,}/\1[REDACTED]/g'
+}
+
 if [ ! -f "$ERRORS_FILE" ]; then
   {
     echo "$HEADER_1"
@@ -88,9 +114,9 @@ fi
 # Build detail field: command for Bash, error message for everything else
 DETAIL=""
 if [ -n "$COMMAND" ]; then
-  DETAIL=$(printf '%s' "$COMMAND" | head -1 | cut -c1-200) || true
+  DETAIL=$(printf '%s' "$COMMAND" | head -1 | redact | cut -c1-200) || true
 elif [ -n "$ERROR_MSG" ]; then
-  DETAIL=$(printf '%s' "$ERROR_MSG" | tr -d '\n' | cut -c1-200) || true
+  DETAIL=$(printf '%s' "$ERROR_MSG" | tr -d '\n' | redact | cut -c1-200) || true
 fi
 
 EXIT_FIELD="${EXIT_CODE:-n/a}"

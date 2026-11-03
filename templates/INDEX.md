@@ -56,8 +56,6 @@ Research has no agent file on purpose — the `/research` skill already runs for
 | `bash-validator.sh.template` | PreToolUse (matcher: `Bash`) |
 | `error-logger.sh.template` | PostToolUse (matcher: `Bash`) + PostToolUseFailure |
 | `memory-check.sh.template` | Stop |
-| `pre-compact.sh.template` | PreCompact |
-| `post-compact.sh.template` | PostCompact |
 | `agent-suggest.sh.template` | UserPromptSubmit |
 | `README-hooks.md` | Reference — the stdin/stdout contract, wiring, and how to test a hook |
 
@@ -71,7 +69,7 @@ Hooks do nothing until they are wired into `.claude/settings.json`. A misconfigu
 | `research-skill-example.md` | A forked skill, annotated |
 | `task-automation-example.md` | An automation skill, annotated |
 
-The working skills already sit at `.claude/skills/` and need no copying: `/start` · `/end` · `/status` · `/setup` · `/extend` · `/reflect` · `/research` · `/weekly-review` · `/create-skill`.
+The working skills already sit at `.claude/skills/` and need no copying: `/start` · `/end` · `/pulse` · `/setup` · `/extend` · `/reflect` · `/research` · `/weekly-review` · `/create-skill`.
 
 ## Which Settings File
 

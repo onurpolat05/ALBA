@@ -5,13 +5,24 @@
 # Matcher: Bash
 # Purpose: Deny a small set of genuinely catastrophic bash commands.
 #
-# Two-layer security model:
-#   Layer 1 (CC native): permissions.deny / permissions.ask in settings.json.
-#                        Command-level rules, including wrapper-bypassed commands
-#                        (env/sudo/watch/ionice/setsid) and find -exec/-delete.
-#   Layer 2 (this hook): semantic intent detection for patterns that
-#                        command-level rules cannot reason about
-#                        (fork bombs, pipe-to-shell, disk wipes, SQL drops).
+# Two-layer model:
+#   Layer 1 (CC native): permissions.deny / permissions.ask in settings.json,
+#                        plus Claude Code's own command parsing (it already
+#                        refuses to let a prefix rule approve wrapped commands
+#                        or find -exec/-delete). ALBA's shipped rules are listed
+#                        in templates/settings.json.template - nothing more.
+#   Layer 2 (this hook): pattern checks for a short list of catastrophic
+#                        commands (root/home wipes, disk writes, fork bombs,
+#                        pipe-to-shell, force-push of main, SQL drops).
+#
+# WHAT THIS IS NOT: a security boundary. It is a speed bump against accidents.
+# A blocklist cannot enumerate every spelling - `bash -c "..."`, `eval`,
+# `base64 -d | sh`, `python3 -c`, `find / -delete` all pass through it to the
+# normal permission prompt. For a real boundary use Claude Code's sandbox.
+#
+# Register it with "onFailure": "block" (added in Claude Code v2.1.295): a validator
+# that times out or cannot start then blocks the command instead of letting it
+# through.
 #
 # DESIGN RULE - read before adding a pattern:
 #   This hook NEVER returns "allow". A PreToolUse "allow" decision *skips the
@@ -38,18 +49,25 @@
 # Fail-safe: if this validator breaks, ask the user rather than staying silent.
 # Silence would mean "no decision", which is indistinguishable from "nothing
 # matched" - so a broken validator would quietly become a no-op.
-trap 'printf "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"ask\",\"permissionDecisionReason\":\"ALBA bash-validator failed to run. Review this command manually before approving.\"}}\n"; exit 0' ERR
+fail_ask() {
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"ALBA bash-validator could not check this command (%s). Review it manually before approving."}}\n' "$1"
+  exit 0
+}
+trap 'fail_ask "validator error"' ERR
 
 INPUT=$(cat 2>/dev/null) || true
 
-# Extract the command. jq is strongly preferred; the grep fallback below only
-# handles the common single-line payload and cannot decode JSON escapes, so on a
-# machine without jq this hook degrades to best-effort. Install jq.
+# Extract the command. jq is strongly preferred. The grep fallback cannot decode
+# JSON escapes: it stops at the first \" and sees a multi-line command as one
+# line, so on any payload containing an escape it would check a truncated
+# command. In that case ask instead of pretending to have checked. Install jq.
 COMMAND=""
 if command -v jq >/dev/null 2>&1; then
   COMMAND=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null) || true
-fi
-if [ -z "$COMMAND" ]; then
+else
+  case "$INPUT" in
+    *'\'*) fail_ask "jq is not installed and the command contains escapes" ;;
+  esac
   COMMAND=$(printf '%s' "$INPUT" | tr '\n' ' ' \
     | grep -oE '"command"[[:space:]]*:[[:space:]]*"[^"]*"' \
     | head -1 \
@@ -61,9 +79,11 @@ if [ -z "$COMMAND" ]; then
   exit 0
 fi
 
-# A command position: start of string, or right after a separator / subshell
-# opener. Without this anchor every pattern below degrades into a substring
-# search over arbitrary text (commit messages, grep needles, file names).
+# A command position: start of a line (grep is line-based, so this also covers
+# each line of a multi-line command, indented or not), or right after a
+# separator / subshell opener / backtick. Without this anchor every pattern
+# below degrades into a substring search over arbitrary text (commit messages,
+# grep needles, file names).
 #
 # Leading VAR=value assignments and known wrapper commands are absorbed too,
 # otherwise `sudo rm -rf ~` or `env FOO=1 rm -rf /` would shift the real command
@@ -72,17 +92,29 @@ fi
 # `git commit -m "rm -rf /"` match again.
 ASSIGN='([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*'
 WRAP_ONE="(sudo|doas|env|command|time|nice|ionice|nohup|setsid|xargs|watch)[[:space:]]+${ASSIGN}((-[^[:space:]]+[[:space:]]+)([^-][^[:space:]]*[[:space:]]+)?)*"
-CMD_START="(^|[[:space:]]*[;&|(]+[[:space:]]*)${ASSIGN}(${WRAP_ONE})*"
+CMD_START="(^[[:space:]]*|[[:space:]]*[;&|(\`]+[[:space:]]*)${ASSIGN}(${WRAP_ONE})*"
+
+# End of an argument: whitespace, a separator, a subshell/backtick closer, or
+# end of line. A bare ([[:space:]]|$) let `rm -rf ~;ls` and `(rm -rf ~)` through.
+END='([[:space:]]|[;&|)`]|$)'
 
 # `--` terminates grep's option parsing: a pattern starting with `-` (e.g.
-# --no-preserve-root) would otherwise be read as a flag.
+# --no-preserve-root) would otherwise be read as a flag. grep exits 2 on a
+# broken pattern; that must not read as "no match", or a typo in this file
+# silently disables a rule.
 matches() {
   printf '%s' "$COMMAND" | grep -qE -- "$1" 2>/dev/null
+  rc=$?
+  [ "$rc" -eq 2 ] && fail_ask "pattern error"
+  return "$rc"
 }
 
 # Case-insensitive variant, for SQL only.
 matches_sql() {
   printf '%s' "$COMMAND" | grep -qiE -- "$1" 2>/dev/null
+  rc=$?
+  [ "$rc" -eq 2 ] && fail_ask "pattern error"
+  return "$rc"
 }
 
 # Reasons are static ASCII strings without quotes or backslashes, so they need
@@ -95,8 +127,13 @@ deny() {
 # --- Filesystem destruction ------------------------------------------------
 
 # Recursive delete aimed at the filesystem root or the home directory.
-# Trailing (space|end) keeps `rm -rf /tmp/build` and `rm -rf ~/proj` allowed.
-if matches "${CMD_START}rm[[:space:]]+(-[^[:space:]]+[[:space:]]+)*(/|~|/\*|~/\*)([[:space:]]|$)"; then
+# The target must END there ($END), which keeps `rm -rf /tmp/build` and
+# `rm -rf ~/proj` allowed. Spellings covered: / // /. /* ~ ~/ ~/. ~/* "/" '/'
+# and $HOME / ${HOME} / "$HOME" with an optional trailing / or /*.
+# The command word may be escaped or absolute: \rm, /bin/rm, /usr/bin/rm.
+RM_WORD='(\\|/bin/|/usr/bin/)?rm'
+RM_TARGET='(/|//|/\.|/\*|~|~/|~/\.|~/\*|"/"|'"'"'/'"'"'|"?\$\{?HOME\}?(/|/\*)?"?)'
+if matches "${CMD_START}${RM_WORD}[[:space:]]+(-[^[:space:]]+[[:space:]]+)*${RM_TARGET}${END}"; then
   deny "recursive delete targeting the filesystem root or home directory"
 fi
 
@@ -122,23 +159,33 @@ if matches ">[[:space:]]*/dev/(sd|hd|nvme|disk|rdisk)"; then
   deny "redirect into a raw disk device"
 fi
 
-# Recursive world-writable permissions on the filesystem root.
-if matches "${CMD_START}chmod[[:space:]]+-[^[:space:]]*R[^[:space:]]*[[:space:]]+0?777[[:space:]]+/"; then
+# Recursive world-writable permissions on the filesystem root, with the flags
+# in either order (`chmod -R 777 /`, `chmod 777 -R /`, `chmod -R a+rwx /`).
+CHMOD_SEG="${CMD_START}chmod([[:space:]][^;&|]*)?"
+if matches "${CHMOD_SEG}[[:space:]]-[^[:space:]]*R" \
+  && matches "${CHMOD_SEG}[[:space:]](0?777|a\+rwx)[[:space:]]" \
+  && matches "${CHMOD_SEG}[[:space:]]/${END}"; then
   deny "recursive chmod 777 on the filesystem root"
 fi
 
 # --- Process / shell abuse -------------------------------------------------
 
-# Classic fork bomb  :(){ :|:& };:
-if matches ":\(\)[[:space:]]*\{[[:space:]]*:\|:&[[:space:]]*\}[[:space:]]*;[[:space:]]*:"; then
+# Fork bomb  :(){ :|:& };:  with any spacing.
+S='[[:space:]]*'
+if matches ":\(\)${S}\{${S}:${S}\|${S}:${S}&${S}\}${S};${S}:"; then
   deny "fork bomb"
 fi
 
-# Downloading a script and piping it straight into a shell. The remote content
-# is unreviewable at approval time, which is what makes this different from a
-# plain curl.
-if matches "${CMD_START}(curl|wget)[[:space:]][^;&]*\|[[:space:]]*(sudo[[:space:]]+)?(ba|z|k|da)?sh([[:space:]]|$)"; then
+# Downloading a script and running it unread: piped into a shell (optionally
+# via sudo with flags, env, or an absolute path), or through process
+# substitution. The remote content is unreviewable at approval time, which is
+# what makes this different from a plain curl.
+SHELL_WORD='(/usr)?(/bin/)?(ba|z|k|da)?sh'
+if matches "${CMD_START}(curl|wget)[[:space:]][^;&]*\|[[:space:]]*(sudo([[:space:]]+-[^[:space:]]+)*[[:space:]]+)?(env[[:space:]]+)?${SHELL_WORD}${END}"; then
   deny "piping downloaded content directly into a shell"
+fi
+if matches "${CMD_START}${SHELL_WORD}[[:space:]]+<\([[:space:]]*(curl|wget)[[:space:]]"; then
+  deny "running downloaded content through process substitution"
 fi
 
 # --- Git history destruction ----------------------------------------------
@@ -152,6 +199,13 @@ fi
 if matches "${CMD_START}git[[:space:]]+push[[:space:]][^;&|]*[[:space:]](main|master)[[:space:]][^;&|]*(--force|-f)([[:space:]]|$)"; then
   deny "force push to main/master"
 fi
+# A leading + on a refspec is a force push without the flag.
+if matches "${CMD_START}git[[:space:]]+push[[:space:]][^;&|]*[[:space:]]\+(refs/heads/)?(main|master)${END}"; then
+  deny "force push to main/master"
+fi
+# A bare `git push --force` with no branch is not denied here: the target is
+# whatever the current branch tracks, which this hook cannot see. The shipped
+# settings already route every `git push` through permissions.ask.
 
 # Rewrites every commit in the repository.
 if matches "${CMD_START}git[[:space:]]+filter-branch([[:space:]]|$)"; then
@@ -168,7 +222,10 @@ if matches_sql "DROP[[:space:]]+(DATABASE|SCHEMA)[[:space:]]"; then
   deny "DROP DATABASE/SCHEMA"
 fi
 
-if matches_sql "TRUNCATE[[:space:]]+TABLE[[:space:]]"; then
+# TABLE is optional in SQL (`TRUNCATE users`). The shell `truncate` command
+# takes a -s/--size flag first, so requiring a name character right after the
+# keyword keeps `truncate -s 0 file` allowed.
+if matches_sql "TRUNCATE[[:space:]]+(TABLE[[:space:]]+)?(ONLY[[:space:]]+)?[\"A-Za-z_]"; then
   deny "TRUNCATE TABLE"
 fi
 

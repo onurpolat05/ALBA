@@ -3,7 +3,7 @@
 Everything a skill file can declare, what each field is for, and the two mistakes that cost the
 most. Copy the [starting point](#starting-point) at the bottom and delete what you don't need.
 
-Verified against Claude Code **v2.1.220**.
+Verified against Claude Code **v2.1.317**.
 
 ---
 
@@ -49,10 +49,10 @@ Write the clause even when nothing conflicts yet — something will.
 
 | Field | Value | Notes |
 |-------|-------|-------|
-| `context` | `inline` \| `fork` | `inline` runs in the main conversation. `fork` runs in a subagent so its file reads and search noise never enter your context window |
+| `context` | `fork` (or omit) | Omit it and the skill runs in the main conversation. `fork` runs it in a subagent so its file reads and search noise never enter your context window. `fork` is the only documented value - `context: inline` is not one, and Claude Code ignores it |
 | `background` | `true` \| `false` | **Only meaningful with `context: fork`.** See §3 — read it before shipping any fork skill |
 | `agent` | `Explore` \| `Plan` \| `general-purpose` | Which agent type the fork runs as. `Explore` is read-only and tuned for search; `Plan` for design work; `general-purpose` when the fork needs to write files |
-| `model` | model id | Pin a specific model, usually to run a mechanical skill more cheaply. Use current ids: `claude-opus-5`, `claude-sonnet-5`, `claude-fable-5`, `claude-haiku-4-5-20251001` |
+| `model` | alias or model id | Pin a model, usually to run a mechanical skill more cheaply. Prefer an alias (`haiku`, `sonnet`, `opus`): it follows each new release, while a full id such as `claude-haiku-5-5` stays pinned until someone edits it |
 | `effort` | `low` \| `medium` \| `high` | Reasoning budget. Readable inside the skill as `${CLAUDE_EFFORT}` |
 | `shell` | shell name | Which shell the skill's commands run under |
 
@@ -60,8 +60,8 @@ Write the clause even when nothing conflicts yet — something will.
 
 | Field | Value | Notes |
 |-------|-------|-------|
-| `allowed-tools` | list | Allowlist while the skill is active. `AskUserQuestion` only works with `context: inline` — a fork has nobody to ask |
-| `disallowed-tools` | list | Explicit denylist |
+| `allowed-tools` | list | **Pre-approves** these tools - Claude may use them without a permission prompt during the turn that invokes the skill. It does **not** restrict anything: every other tool stays available. Scope it like a permission rule (`Edit(memory/research/**)`, `Bash(git log *)`), never a bare `Write` or `Bash` on a skill that reads untrusted content |
+| `disallowed-tools` | list | Removes tools from the pool while the skill is active - this is the field that restricts. `AskUserQuestion` belongs here for a fork, which has nobody to ask |
 | `paths` | glob list | Skill is only active when the files in play match one of these globs. Good for language- or directory-specific skills |
 
 ### How it gets invoked
@@ -188,7 +188,7 @@ produces a different shape every time.
 - [ ] `description` + `when_to_use` under 1,536 characters
 - [ ] If `context: fork`: `background` decided on purpose, not left to default
 - [ ] If `context: fork`: no `AskUserQuestion` in `allowed-tools`
-- [ ] `allowed-tools` is the minimum set that actually works
+- [ ] `allowed-tools` is the minimum set that actually works, and every write or shell entry is scoped
 - [ ] Any `model` pin uses a current model id
 - [ ] Frontmatter parses as valid YAML
 - [ ] Invoked once with a real input and the output matched the documented format

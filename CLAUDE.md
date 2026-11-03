@@ -25,7 +25,7 @@ Welcome! This is your ALBA agent. Run `/setup` to create your personalized AI ag
 |---------|---------|
 | `/start` | Begin session, load context |
 | `/end` | End session, save state |
-| `/status` | Quick overview |
+| `/pulse` | Quick overview |
 | `/extend` | Add new features anytime |
 
 ## Documentation

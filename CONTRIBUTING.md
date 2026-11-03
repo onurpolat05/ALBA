@@ -14,7 +14,7 @@ alba/
 │   │   ├── setup/             # /setup - interactive setup wizard
 │   │   ├── start/             # /start - session start
 │   │   ├── end/               # /end - session end
-│   │   ├── status/            # /status - quick overview
+│   │   ├── pulse/             # /pulse - quick overview
 │   │   ├── research/          # /research - web research (fork)
 │   │   ├── weekly-review/     # /weekly-review - weekly performance review
 │   │   ├── extend/            # /extend - add features
@@ -26,13 +26,16 @@ alba/
 │   ├── settings.json.template # Canonical hook wiring + permissions
 │   ├── claude/                # CLAUDE.md + doc templates (6)
 │   ├── memory/                # Memory file templates (5)
-│   ├── hooks/                 # Hook script templates (8) + README-hooks.md
+│   ├── hooks/                 # Hook script templates (6) + README-hooks.md
 │   ├── rules/                 # Rule templates (3)
 │   ├── agents/                # Agent templates (1)
 │   └── skills/                # Skill reference guides (3)
 ├── tools/
 │   ├── sync-examples.sh       # Regenerate examples/ from templates/
-│   └── doctor.sh              # Health check - run before every PR
+│   ├── doctor.sh              # Health check - run before every PR
+│   ├── test-validator.sh      # bash-validator regression run (doctor calls it)
+│   ├── validator-cases.txt    # expected decision per command
+│   └── lib/hook_scripts.py    # hook wiring checks used by doctor
 ├── examples/                  # Role-based example setups (5)
 │   └── [role]/
 │       ├── CLAUDE.md          # role-specific, hand-written
@@ -93,8 +96,10 @@ Hooks are the only part of an ALBA setup that runs without the model deciding to
 
 **Hard requirements:**
 
-- **The event name must be one of the 30 real hook events.** A misspelled or invented event name is accepted without complaint and never fires. The full list is in `templates/hooks/README-hooks.md`; `tools/doctor.sh` checks yours against it.
-- **Use `${CLAUDE_PROJECT_DIR}` in the command path.** A relative path (`bash .claude/hooks/x.sh`) resolves against the session's working directory and breaks the moment someone opens Claude Code in a subdirectory.
+- **The event name must be one of the 33 real hook events.** A misspelled or invented event name is accepted without complaint and never fires. The full list is in `templates/hooks/README-hooks.md`; `tools/doctor.sh` checks yours against it.
+- **Use `${CLAUDE_PROJECT_DIR}` in the command path, in double quotes.** A relative path (`bash .claude/hooks/x.sh`) resolves against the session's working directory and breaks the moment someone opens Claude Code in a subdirectory. Unquoted, a project path with a space makes bash exit 127 and the hook silently never runs.
+- **Know where your output goes.** Plain stdout reaches Claude only on `SessionStart`, `UserPromptSubmit`, `UserPromptExpansion` and `PostModelSwitch`. Elsewhere use `systemMessage` (for the user) or `additionalContext` (for Claude) where the event supports it. `tools/doctor.sh` runs every hook and fails on plain text printed where nobody will read it.
+- **A validator pattern needs a test case.** Add a `deny` line and at least one `none` line (the closest legitimate command) to `tools/validator-cases.txt`.
 - **Keep the inner `hooks` array.** Each entry under an event name is `{matcher?, hooks: [...]}`. Flattening it installs nothing, silently.
 - **Never return `allow` from a `PreToolUse` hook.** `permissionDecision: "allow"` *skips the user's permission prompt*. A validator that approves whatever its blocklist missed does not add a safety layer — it removes the one that was already there. Emit `deny` on a match, and **no output at all** otherwise, so the normal permission flow applies unchanged. `tools/doctor.sh` fails the build on an `allow`.
 - **Read the documented input field.** Field names differ per event and are not guessable — `UserPromptSubmit` carries the prompt in `prompt`, not `message`. Check `README-hooks.md` before parsing a payload.

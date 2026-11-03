@@ -48,6 +48,12 @@ if [ -z "$SESSION_ID" ]; then
 fi
 SHORT_ID=$(printf '%s' "${SESSION_ID:-unknown}" | cut -c1-8) || SHORT_ID="unknown"
 
+# Never write through a symlink: a planted link would turn this append into a
+# write to an arbitrary file.
+if [ -L "$DAILY_DIR" ] || [ -L "$DAILY_LOG" ]; then
+  exit 0
+fi
+
 if [ ! -f "$DAILY_LOG" ]; then
   {
     echo "# ${TODAY}"

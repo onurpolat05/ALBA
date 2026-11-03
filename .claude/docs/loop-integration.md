@@ -2,7 +2,7 @@
 
 `/loop` is a built-in Claude Code command that re-runs a prompt or skill on a recurring basis. ALBA uses it for passive awareness — priorities, deadlines, error patterns — not for automation.
 
-Requires Claude Code v2.1.218 or later (ALBA's minimum). Verified against v2.1.220.
+Requires Claude Code v2.1.218 or later (ALBA's minimum). Verified against v2.1.317.
 
 ## Two Modes
 
@@ -13,7 +13,7 @@ Requires Claude Code v2.1.218 or later (ALBA's minimum). Verified against v2.1.2
 ```
 
 ```
-/loop 30m /status
+/loop 30m /pulse
 /loop 1h check dashboard.md for approaching deadlines
 /loop 2h scan errors.md for recurring patterns
 ```
@@ -25,7 +25,7 @@ Interval units: `s`, `m`, `h`, `d`. Omit the interval and you get the other mode
 Leave the interval out and Claude chooses its own cadence:
 
 ```
-/loop /status
+/loop /pulse
 ```
 
 Useful when "every N minutes" is the wrong shape for the job — watching a long build, waiting on an external change. Claude tightens the interval while something is actively happening and stretches it when nothing is.
@@ -34,14 +34,14 @@ Useful when "every N minutes" is the wrong shape for the job — watching a long
 
 | Loop | What it gives you |
 |---|---|
-| `/loop 30m /status` | Periodic priority check |
+| `/loop 30m /pulse` | Periodic priority check |
 | `/loop 1h check dashboard.md for approaching deadlines` | Deadline awareness |
 | `/loop 2h scan errors.md for recurring patterns` | Error pattern detection |
-| `/loop /status` | Self-paced — Claude decides when to look |
+| `/loop /pulse` | Self-paced — Claude decides when to look |
 
 ## Practice
 
-- Loop read-only things. `/status` is the right size; it reads state and reports.
+- Loop read-only things. `/pulse` is the right size; it reads state and reports.
 - **Don't loop `/start` or `/end`.** Those are session boundaries and they write state — running them on a timer corrupts the record of what actually happened.
 - Keep fixed intervals at 5 minutes or longer. Shorter is noise, and each wake-up costs tokens.
 - Loops are for *surfacing*, not *deciding*. The loop tells you a deadline is close; you decide what to do about it.
@@ -64,5 +64,5 @@ For anything that must run whether or not you have a session open:
 None. `/loop` ships with Claude Code. After ALBA setup:
 
 ```
-/loop 30m /status
+/loop 30m /pulse
 ```

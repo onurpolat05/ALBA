@@ -9,7 +9,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
   <a href="https://docs.claude.com/en/docs/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.218+-purple.svg" alt="Claude Code minimum"></a>
-  <a href="https://github.com/anthropics/claude-code/releases"><img src="https://img.shields.io/badge/Tested-v2.1.220-green.svg" alt="Getestet mit v2.1.220"></a>
+  <a href="https://github.com/anthropics/claude-code/releases"><img src="https://img.shields.io/badge/Tested-v2.1.317-green.svg" alt="Getestet mit v2.1.317"></a>
   <a href="https://github.com/onurpolat05/ALBA/stargazers"><img src="https://img.shields.io/github/stars/onurpolat05/ALBA?style=social" alt="Stars"></a>
 </p>
 
@@ -48,7 +48,7 @@ your-agent/
 │   └── daily/                    # Sitzungsprotokolle (automatisch erstellt)
 ├── .claude/
 │   ├── skills/                   # 9 integrierte Skills
-│   ├── hooks/                    # 8 automatisierte Event-Handler
+│   ├── hooks/                    # 6 automatisierte Event-Handler
 │   ├── agents/                   # Subagent-Definitionen
 │   ├── rules/                    # Verhaltensrichtlinien (automatisch geladen)
 │   ├── docs/                     # Referenzdokumentation (lazy-loaded)
@@ -74,7 +74,7 @@ Dateibasierter Drei-Schichten-Speicher, der sitzungsübergreifend erhalten bleib
 |-------|-------|
 | `/start` | Sitzung starten — Kontext laden, Prioritäten anzeigen |
 | `/end` | Sitzung beenden — Zustand speichern, Tagesprotokoll erstellen |
-| `/status` | Schnellübersicht — Aufgaben, Blocker, letzte Sitzung |
+| `/pulse` | Schnellübersicht — Aufgaben, Blocker, letzte Sitzung |
 | `/research` | Webrecherche mit strukturierter Ausgabe (läuft als Subagent) |
 | `/weekly-review` | Wöchentliche Leistungsauswertung und Planung der nächsten Woche |
 | `/extend` | Jederzeit neue Skills, Hooks oder Rules hinzufügen |
@@ -82,22 +82,20 @@ Dateibasierter Drei-Schichten-Speicher, der sitzungsübergreifend erhalten bleib
 | `/create-skill` | Geführter Skill-Erstellungsassistent |
 | `/setup` | Interaktive Ersteinrichtung |
 
-### 8 automatisierte Hooks
+### 6 automatisierte Hooks
 
 | Claude Code Event | Script | Was passiert |
 |---|---|---|
-| `SessionStart` | `session-start.sh` | Dashboard wird geladen, Prioritäten angezeigt |
+| `SessionStart` | `session-start.sh` | Dashboard wird geladen, Prioritäten angezeigt — und direkt nach einer Compaction Hinweise zur Wiederaufnahme |
 | `UserPromptSubmit` | `agent-suggest.sh` | Passender Skill wird zu dem vorgeschlagen, was Sie gerade getippt haben |
 | `PreToolUse` | `bash-validator.sh` | Destruktiver Befehl wird abgelehnt, bevor er läuft |
-| `PostToolUse` | `error-logger.sh` | Bash-Fehler werden zur Mustererkennung protokolliert |
-| `PostToolUseFailure` | `error-logger.sh` | Edit-, Write- und MCP-Fehler ebenfalls protokolliert |
+| `PostToolUseFailure` | `error-logger.sh` | Fehlgeschlagene Tool-Aufrufe werden zur Mustererkennung protokolliert, Zugangsdaten maskiert |
 | `Stop` | `memory-check.sh` | Erinnerung, den Zustand zu speichern — mit Rate-Limit, nicht bei jedem Turn |
 | `SessionEnd` | `session-end.sh` | Sachlicher Eintrag im heutigen Protokoll, auch wenn Sie `/end` überspringen |
-| `PreCompact` / `PostCompact` | `pre-compact.sh`, `post-compact.sh` | Prioritäten überstehen die Context Compaction |
 
-Neun Registrierungen, acht Skripte — `error-logger.sh` ist an beide Tool-Fehler-Events gebunden.
+Sechs Skripte, je ein Event. Einen `PreCompact`/`PostCompact`-Hook gibt es bewusst nicht: Normale Ausgabe auf stdout landet bei diesen Events im Debug-Log, nie bei Claude. ALBA hat bis v2.0.0 zwei solche Hooks mitgeliefert, und keiner hat je etwas bewirkt. Nach einer Compaction löst Claude Code `SessionStart` erneut mit der Quelle `compact` aus, deshalb übernimmt `session-start.sh` die Wiederaufnahme.
 
-**Zum Validator:** Er lehnt eine kurze Liste tatsächlich destruktiver Befehle ab und schweigt zu allem anderen. Schweigen heißt *schweigen* — keine Ausgabe, Exit 0, normaler Berechtigungsablauf. Ein `PreToolUse` Hook, der mit `"allow"` antwortet, überspringt Ihren Berechtigungs-Prompt vollständig; ein Validator, der alles durchwinkt, was seine Blocklist verfehlt hat, ist damit kein Sicherheitsnetz, sondern ein Loch. ALBA hat dieses Loch bis v2.0.0 mitgeschleppt.
+**Zum Validator:** Er lehnt eine kurze Liste tatsächlich destruktiver Befehle ab und schweigt zu allem anderen. Schweigen heißt *schweigen* — keine Ausgabe, Exit 0, normaler Berechtigungsablauf. Ein `PreToolUse` Hook, der mit `"allow"` antwortet, überspringt Ihren Berechtigungs-Prompt vollständig; ein Validator, der alles durchwinkt, was seine Blocklist verfehlt hat, ist damit kein Sicherheitsnetz, sondern ein Loch. ALBA hat dieses Loch bis v2.0.0 mitgeschleppt. Betrachten Sie den Validator als Bremsschwelle gegen Versehen, nicht als Sicherheitsgrenze: Sein Dateikopf nennt, was eine Blocklist nicht abfangen kann, und `tools/test-validator.sh` enthält die Fälle, gegen die er geprüft wird. Für eine echte Grenze nutzen Sie die Sandbox von Claude Code.
 
 ### Selbstverbesserung
 
@@ -117,7 +115,7 @@ CLAUDE.md bleibt unter 200 Zeilen. Systemdokumentation wird nur bei Bedarf nachg
 
 ### Option 1: GitHub Template (Empfohlen)
 
-Klicken Sie auf **"Use this template"** auf GitHub, dann:
+Klicken Sie auf **"Use this template"** auf GitHub und **wählen Sie Private** — `memory/` wird committet und enthält Ihre Prioritäten, Aufgaben und Kundennamen. Dann:
 
 ```bash
 git clone https://github.com/YOUR-USERNAME/YOUR-REPO.git my-agent
@@ -154,7 +152,7 @@ Morgens:
 
 Während der Arbeit:
   "research multi-agent patterns"    # /research läuft als Subagent
-  "what's my status?"                # /status zeigt Schnellübersicht
+  "what's my status?"                # /pulse zeigt Schnellübersicht
 
 Feierabend:
   /end                      # Speichert Fortschritt, erfasst Erkenntnisse, erstellt Tagesprotokoll
@@ -164,7 +162,7 @@ Freitag:
 
 Jederzeit:
   /extend                   # "Ich möchte einen Content-Creation-Skill" → wird erstellt
-  /loop 30m /status         # Periodische Erinnerungen, sitzungsbezogen
+  /loop 30m /pulse         # Periodische Erinnerungen, sitzungsbezogen
 ```
 
 ---
@@ -177,7 +175,7 @@ Jederzeit:
 | Setup-Erfahrung | Manuelle Konfiguration | Copy-Paste | Interaktiver Assistent (7 Fragen) |
 | Rollenunterstützung | Generisch | Nur Entwickler | Jede Rolle (5 Beispiele enthalten) |
 | Selbstverbesserung | Nein | Nein | Automatische Fehler- und Erkenntniserfassung |
-| Hooks | Manuelles Setup | Einige Templates | 8 Hooks, automatisch konfiguriert |
+| Hooks | Manuelles Setup | Einige Templates | 6 Hooks, automatisch konfiguriert |
 | Skills | Keine integrierten | Variiert | 9 integrierte, erweiterbar |
 | Kontexteffizienz | N/A | N/A | Progressive Disclosure (< 200 Zeilen) |
 | Konfigurations-Check | `/doctor` (Ihre Installation) | Nein | `tools/doctor.sh` (die Konfiguration selbst) |
@@ -237,7 +235,7 @@ LOGS (automatisch)        →  memory/daily/YYYY-MM-DD.md
 
 ### Hook-System
 
-Hooks sind Bash-Skripte, die durch Claude Code Events ausgelöst und in `.claude/settings.json` verdrahtet werden. Sie laufen automatisch — kein manueller Aufruf nötig. Claude Code stellt 30 Hook-Events bereit; ALBA nutzt neun davon und dokumentiert alle in [`templates/hooks/README-hooks.md`](templates/hooks/README-hooks.md).
+Hooks sind Bash-Skripte, die durch Claude Code Events ausgelöst und in `.claude/settings.json` verdrahtet werden. Sie laufen automatisch — kein manueller Aufruf nötig. Claude Code stellt 33 Hook-Events bereit; ALBA nutzt sechs davon und dokumentiert alle in [`templates/hooks/README-hooks.md`](templates/hooks/README-hooks.md).
 
 Hooks scheitern lautlos. Ein falsch geschriebener Event-Name, ein fehlendes inneres `hooks`-Array, ein relativer Pfad, der bricht, sobald Sie eine Sitzung in einem Unterverzeichnis öffnen — nichts davon erzeugt einen Fehler. Die Funktion passiert einfach nie. Genau dafür ist `tools/doctor.sh` da.
 
@@ -283,13 +281,13 @@ Oder fragen Sie einfach direkt:
 
 ## Voraussetzungen
 
-- **Claude Code v2.1.218 oder neuer.** Verifiziert gegen v2.1.220. [Installieren](https://docs.claude.com/en/docs/claude-code). Diese Untergrenze ist nicht willkürlich: `background` für geforkte Skills kam mit v2.1.218, und ohne dieses Feld liefern `/research` und `/reflect` ihre Antworten an einen Background-Task statt an Sie.
+- **Claude Code v2.1.218 oder neuer, v2.1.314 oder neuer empfohlen.** Verifiziert gegen v2.1.317. Zwei Schutzmaßnahmen in den mitgelieferten Settings greifen erst in neueren Versionen — `onFailure: "block"` am Validator und `blockWritesOutsideWorkingDirectories` —, ältere Versionen überspringen sie stillschweigend, statt zu scheitern. [Installieren](https://docs.claude.com/en/docs/claude-code). Diese Untergrenze ist nicht willkürlich: `background` für geforkte Skills kam mit v2.1.218, und ohne dieses Feld liefern `/research` und `/reflect` ihre Antworten an einen Background-Task statt an Sie.
 - **Git**
 - **jq** — wird von den Hooks zum Parsen des Event-JSON genutzt. Jeder Hook fällt ohne jq auf einen grep-Fallback zurück, aber die Installation ist ein einziger Befehl.
 
 MCP-Server sind optionale Erweiterungen — ALBA funktioniert vollständig eigenständig.
 
-Sie aktualisieren Claude Code? Führen Sie `tools/doctor.sh` aus. Es prüft genau die Dinge, die über Versionen hinweg lautlos brechen: Hook-Event-Namen, Settings-Schema, tote Skript-Pfade.
+Sie aktualisieren Claude Code? Führen Sie `tools/doctor.sh` aus. Es prüft genau die Dinge, die über Versionen hinweg lautlos brechen: Hook-Event-Namen, Settings-Schema, tote Skript-Pfade und Hooks, deren Ausgabe Claude nicht mehr erreicht. Claude Codes eigenes `/doctor prompt-audit` ergänzt das, indem es Prompt-Muster markiert, die für ältere Modelle geschrieben wurden.
 
 ---
 

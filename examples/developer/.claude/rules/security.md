@@ -17,6 +17,9 @@ Security guidelines for safe operation. This file auto-loads from `.claude/rules
 ## Safe Commands
 
 ### Always Ask Before Running
+
+The shipped `settings.json` enforces part of this list through `permissions.ask`: `rm -rf`, `git reset --hard`, `git clean`, `chmod -R`, `chown -R`, `git push`. The rest is guidance for you - nothing in the harness stops it.
+
 - `rm -rf` (any recursive force delete)
 - `git reset --hard`, `git push --force`
 - `DROP DATABASE`, `DROP TABLE`, `DELETE FROM`
@@ -30,6 +33,8 @@ Security guidelines for safe operation. This file auto-loads from `.claude/rules
 - Linters and type checkers
 - Build commands (npm run build, make)
 - Git operations on local branches (checkout, branch, commit)
+
+In a repository you did not write, a test runner or build command executes that repository's code. The first run in an unfamiliar repo is an action to ask about, not a read.
 
 ---
 

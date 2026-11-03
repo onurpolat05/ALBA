@@ -27,10 +27,10 @@ pass() { printf '  ok    %s\n' "$1"; }
 fail() { printf '  FAIL  %s\n' "$1"; FAIL=$((FAIL + 1)); }
 warn() { printf '  warn  %s\n' "$1"; WARN=$((WARN + 1)); }
 
-# Valid hook events as of Claude Code v2.1.220. A settings.json referencing an
-# event outside this list is not an error Claude Code reports - the hook is
-# simply never called.
-VALID_EVENTS="SessionStart Setup UserPromptSubmit UserPromptExpansion PreToolUse PermissionRequest PermissionDenied PostToolUse PostToolUseFailure PostToolBatch Notification MessageDisplay SubagentStart SubagentStop TaskCreated TaskCompleted Stop StopFailure TeammateIdle InstructionsLoaded ConfigChange CwdChanged FileChanged WorktreeCreate WorktreeRemove PreCompact PostCompact Elicitation ElicitationResult SessionEnd"
+# Valid hook events per the Claude Code hooks reference (33, checked against
+# v2.1.317). A settings.json referencing an event outside this list is not an
+# error Claude Code reports - the hook is simply never called.
+VALID_EVENTS="SessionStart Setup UserPromptSubmit UserPromptExpansion PreToolUse PermissionRequest PermissionDenied PostToolUse PostToolUseFailure PostToolBatch Notification MessageDisplay SubagentStart SubagentStop TaskCreated TaskCompleted Stop StopFailure TeammateIdle InstructionsLoaded ConfigChange CwdChanged FileChanged WorktreeCreate WorktreeRemove PreCompact PostCompact Elicitation ElicitationResult SessionEnd DirectoryAdded PreModelSwitch PostModelSwitch"
 
 echo "ALBA doctor"
 echo
@@ -49,7 +49,7 @@ echo
 # ---------------------------------------------------------------------------
 echo "2. JSON validity"
 for f in $(find . -name 'settings.json' -o -name 'settings.json.template' 2>/dev/null | grep -v node_modules | sort); do
-  if python3 -c "import json,sys; json.load(open('$f'))" 2>/dev/null; then
+  if python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$f" 2>/dev/null; then
     pass "$f"
   else
     fail "$f is not valid JSON"
@@ -61,11 +61,11 @@ echo
 echo "3. Hook wiring"
 for f in $(find . -name 'settings.json' -o -name 'settings.json.template' 2>/dev/null | grep -v node_modules | sort); do
   # Event names must exist.
-  events=$(python3 -c "
-import json
-d = json.load(open('$f'))
-print(' '.join(d.get('hooks', {}).keys()))
-" 2>/dev/null)
+  events=$(python3 -c '
+import json, sys
+d = json.load(open(sys.argv[1]))
+print(" ".join(d.get("hooks", {}).keys()))
+' "$f" 2>/dev/null)
 
   for ev in $events; do
     case " $VALID_EVENTS " in
@@ -76,42 +76,39 @@ print(' '.join(d.get('hooks', {}).keys()))
 
   # Every registration needs the inner "hooks" array. Without it Claude Code
   # ignores the entry; this exact mistake shipped in ALBA's own hook docs.
-  bad_shape=$(python3 -c "
-import json
-d = json.load(open('$f'))
+  bad_shape=$(python3 -c '
+import json, sys
+d = json.load(open(sys.argv[1]))
 bad = []
-for ev, entries in d.get('hooks', {}).items():
+for ev, entries in d.get("hooks", {}).items():
     for e in entries:
-        if 'hooks' not in e or not isinstance(e['hooks'], list):
+        if "hooks" not in e or not isinstance(e["hooks"], list):
             bad.append(ev)
-print(' '.join(sorted(set(bad))))
-" 2>/dev/null)
+print(" ".join(sorted(set(bad))))
+' "$f" 2>/dev/null)
   [ -n "$bad_shape" ] && fail "$f: missing inner 'hooks' array for: $bad_shape"
 
   # Referenced scripts must exist relative to the config's own .claude/ dir.
-  missing=$(python3 -c "
-import json, os, re
-f = '$f'
-d = json.load(open(f))
-root = os.path.dirname(os.path.dirname(f)) or '.'
-if f.endswith('.template'):
-    raise SystemExit(0)
-miss = []
-for entries in d.get('hooks', {}).values():
-    for e in entries:
-        for h in e.get('hooks', []):
-            cmd = h.get('command', '')
-            m = re.search(r'\.claude/hooks/([\w.-]+)', cmd)
-            if m and not os.path.isfile(os.path.join(root, '.claude', 'hooks', m.group(1))):
-                miss.append(m.group(1))
-print(' '.join(sorted(set(miss))))
-" 2>/dev/null)
+  missing=$(python3 tools/lib/hook_scripts.py missing "$f" 2>/dev/null)
   [ -n "$missing" ] && fail "$f: wired to missing script(s): $missing"
 
   # Relative hook paths break the moment a session opens in a subdirectory.
   if grep -q '"command": *"bash \.claude/' "$f" 2>/dev/null; then
     fail "$f: relative hook path - use \${CLAUDE_PROJECT_DIR}"
   fi
+
+  # An unquoted ${CLAUDE_PROJECT_DIR} splits on spaces: in a project folder like
+  # "My Agent" bash exits 127, a non-blocking error, so the hook - validator
+  # included - silently stops running.
+  if grep -qE '"command": *"bash [$]' "$f" 2>/dev/null; then
+    fail "$f: unquoted CLAUDE_PROJECT_DIR in a hook command - quote it: bash \"\${CLAUDE_PROJECT_DIR}\"/..."
+  fi
+
+  # Plain stdout reaches Claude on only four events. A hook registered anywhere
+  # else whose script neither emits JSON output nor writes a file is a no-op.
+  # ALBA shipped two of those (PreCompact, PostCompact) through v2.0.0.
+  silent=$(python3 tools/lib/hook_scripts.py silent "$f" 2>/dev/null)
+  [ -n "$silent" ] && fail "$f: stdout-only hook on an event that discards stdout: $silent"
 
   # File permission rules are matched on Edit(path) only; a Write(path) rule is
   # accepted, printed back as a startup warning, and then ignored. ALBA shipped
@@ -136,6 +133,18 @@ for f in $(find templates/hooks examples -name 'bash-validator.sh*' 2>/dev/null 
     pass "$(basename "$f") never auto-approves"
   fi
 done
+echo
+
+# ---------------------------------------------------------------------------
+echo "4b. bash-validator regression cases"
+if ! command -v jq >/dev/null 2>&1; then
+  warn "jq not installed - skipped tools/test-validator.sh"
+elif out=$(bash tools/test-validator.sh 2>&1); then
+  pass "$(printf '%s' "$out" | tail -1)"
+else
+  printf '%s\n' "$out" | grep '^FAIL' | sed 's/^/        /'
+  fail "$(printf '%s' "$out" | tail -1)"
+fi
 echo
 
 # ---------------------------------------------------------------------------
@@ -186,16 +195,19 @@ echo "7. Stale support claims"
 # necessary. What goes stale is ALBA's own claim about what it supports and
 # what it was tested against - so only those are checked.
 BASELINE="v2.1.218"
-TESTED="v2.1.220"
-stale=$(grep -rnE "(minimum|requires?|tested|supported).{0,40}v2\.1\.[0-9]+|v2\.1\.[0-9]+\+" \
+RECOMMENDED="v2.1.314"
+TESTED="v2.1.317"
+# Each claim is matched on its own (-o), so a line that names the baseline and
+# a stale "verified against" version in one sentence is still caught.
+stale=$(grep -rnoiE "(minimum|requires?|tested|supported|verified)[^.]{0,40}v2\.1\.[0-9]+|v2\.1\.[0-9]+\+|Tested-v2\.1\.[0-9]+" \
         --include='*.md' --include='*.template' . 2>/dev/null \
         | grep -v node_modules | grep -v '^\./CHANGELOG.md' \
-        | grep -vE "$BASELINE|$TESTED" \
+        | grep -vE "($BASELINE|$RECOMMENDED|$TESTED)([^0-9]|$)" \
         | cut -d: -f1 | sort -u)
 if [ -z "$stale" ]; then
-  pass "support claims match the $BASELINE baseline / $TESTED tested version"
+  pass "support claims match $BASELINE minimum / $RECOMMENDED recommended / $TESTED tested"
 else
-  for f in $stale; do warn "$f claims support for a version other than $BASELINE/$TESTED"; done
+  for f in $stale; do warn "$f claims support for a version other than $BASELINE/$RECOMMENDED/$TESTED"; done
 fi
 if grep -rqiE '\((latest|neueste|en yeni)[^)]*\)' --include='README*.md' . 2>/dev/null; then
   warn "a README calls a pinned version 'latest' - that expires on its own"
