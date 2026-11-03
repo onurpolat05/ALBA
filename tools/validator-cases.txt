@@ -134,3 +134,12 @@ none|cmd 2>/dev/stderr; ls > /dev/tty
 deny|ls > /dev/null; cat img > /dev/disk2
 none|git commit -m "drop database migration helper"
 none|echo "TRUNCATE users is in the runbook"
+
+# --- second automated review: span, segment and exemption bypasses
+deny|dd if=x of=/dev/sda # of=/dev/null
+deny|dd if=x of=/dev/sda of=/dev/null; dd if=y of=/dev/disk3
+deny|echo hi; python3 -c "c.execute('DROP DATABASE prod')"
+deny|chmod -R a+rwx{,} /
+none|dd if=/dev/zero of=/dev/null bs=1M count=10
+none|echo done; git commit -m "drop schema validation"
+none|chmod -R 755 {src,lib}

@@ -161,9 +161,19 @@ dev_targets() {
   printf '%s' "$COMMAND" | grep -oE -- "$1" 2>/dev/null \
     | grep -oE '/dev/[^[:space:];&|)`"'"'"']*$'
 }
-for target in $(dev_targets "${CMD_START}dd[[:space:]][^;&|]*of=/dev/[^[:space:];&|)\`\"']*"); do
-  printf '%s' "$target" | grep -qE "$SAFE_DEV" || deny "dd writing directly to a device node"
-done
+# dd: every of= operand of every dd invocation, each checked on its own. A
+# single greedy span would only see the last of=, so a harmless one in a
+# trailing comment could hide the real target. `#` ends the span for the same
+# reason.
+DD_SPANS=$(printf '%s' "$COMMAND" | grep -oE -- "${CMD_START}dd[[:space:]][^;&|#]*" 2>/dev/null) || true
+while IFS= read -r span; do
+  [ -n "$span" ] || continue
+  for target in $(printf '%s' "$span" | grep -oE 'of=/dev/[^[:space:];&|)`"'"'"']*' | sed 's/^of=//'); do
+    printf '%s' "$target" | grep -qE "$SAFE_DEV" || deny "dd writing directly to a device node"
+  done
+done <<EOF
+$DD_SPANS
+EOF
 for target in $(dev_targets ">[[:space:]]*/dev/[^[:space:];&|)\`\"']*"); do
   printf '%s' "$target" | grep -qE "$SAFE_DEV" || deny "redirect into a device node"
 done
@@ -171,17 +181,17 @@ done
 # Recursive world-writable permissions on the filesystem root, with the flags
 # in any order (`chmod -R 777 /`, `chmod 777 -R /`, `chmod --recursive a=rwx /`).
 # Checked one command segment at a time, so `chmod -R 755 x; chmod 777 y`
-# cannot assemble a match out of two different commands. Segments split on
-# every way a new command can start - separators, `(` and `$(`, backtick, `{`,
-# `!` - so a command nested in any of them is still at a segment start. A
-# heredoc, not a pipe, feeds the loop: deny() must exit this shell, not a
-# subshell.
-SEGMENTS=$(printf '%s' "$COMMAND" | tr ';&|(`{!' '\n\n\n\n\n\n\n')
+# cannot assemble a match out of two different commands. Segments split only
+# on real separators; a chmod nested in `(`, `$(`, a backtick, `{` or after `!`
+# is found by the opener alternative in the anchor. Splitting on those
+# characters instead would cut words like `a+rwx{,}` in half. A heredoc, not
+# a pipe, feeds the loop: deny() must exit this shell, not a subshell.
+SEGMENTS=$(printf '%s' "$COMMAND" | tr ';&|' '\n\n\n')
 while IFS= read -r seg; do
   case "$seg" in *chmod*) ;; *) continue ;; esac
-  printf '%s' "$seg" | grep -qE "^[[:space:]]*${ASSIGN}(${WRAP_ONE})*chmod[[:space:]]" || continue
+  printf '%s' "$seg" | grep -qE "(^|[(\`{!]|\$\()[[:space:]]*${ASSIGN}(${WRAP_ONE})*chmod[[:space:]]" || continue
   printf '%s' "$seg" | grep -qE "[[:space:]](-[^[:space:]-]*R[^[:space:]]*|--recursive)([[:space:]]|$)" || continue
-  printf '%s' "$seg" | grep -qE "[[:space:]](0?777|[ugoa]*[+=]rwx)([[:space:]]|$)" || continue
+  printf '%s' "$seg" | grep -qE "[[:space:]](0?777|[ugoa]*[+=]rwx)" || continue
   printf '%s' "$seg" | grep -qE "[[:space:]]/([[:space:]]|[)}\`]|$)" || continue
   deny "recursive chmod 777 on the filesystem root"
 done <<EOF
@@ -245,8 +255,18 @@ fi
 # denied. DROP TABLE is deliberately absent: it is routine in migrations and
 # blocking it would train people to disable this hook.
 SQL_CLIENT='(^|[^[:alnum:]_-])(psql|pgcli|mysql|mysqlsh|mycli|mariadb|sqlite3|litecli|sqlcmd|usql|duckdb|clickhouse-client|cockroach[[:space:]]+sql|snowsql)([[:space:]]|$)'
+# The exemption needs EVERY command in the line to be text-only: checking just
+# the first one let `echo hi; python3 -c "...DROP DATABASE..."` through.
 TEXT_ONLY='^[[:space:]]*(git[[:space:]]+(commit|tag|notes|log|show)|grep|egrep|rg|ag|ack|echo|printf)[[:space:]]'
-if matches_sql "$SQL_CLIENT" || ! matches "$TEXT_ONLY"; then
+ALL_TEXT=1
+SQL_SEGMENTS=$(printf '%s' "$COMMAND" | tr ';&|(`' '\n\n\n\n\n')
+while IFS= read -r seg; do
+  case "$seg" in *[![:space:]]*) ;; *) continue ;; esac
+  printf '%s' "$seg" | grep -qE "$TEXT_ONLY" || { ALL_TEXT=0; break; }
+done <<EOF
+$SQL_SEGMENTS
+EOF
+if matches_sql "$SQL_CLIENT" || [ "$ALL_TEXT" -eq 0 ]; then
   if matches_sql "DROP[[:space:]]+(DATABASE|SCHEMA)[[:space:]]"; then
     deny "DROP DATABASE/SCHEMA"
   fi
