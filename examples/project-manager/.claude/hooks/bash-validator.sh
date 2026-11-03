@@ -163,9 +163,9 @@ dev_targets() {
 }
 # dd: every of= operand of every dd invocation, each checked on its own. A
 # single greedy span would only see the last of=, so a harmless one in a
-# trailing comment could hide the real target. `#` ends the span for the same
-# reason.
-DD_SPANS=$(printf '%s' "$COMMAND" | grep -oE -- "${CMD_START}dd[[:space:]][^;&|#]*" 2>/dev/null) || true
+# trailing comment could hide the real target. A `#` that starts a word - a
+# comment - ends the span for the same reason; a `#` inside a word does not.
+DD_SPANS=$(printf '%s' "$COMMAND" | grep -oE -- "${CMD_START}dd[[:space:]]([^;&|#]|[^[:space:];&|]#)*" 2>/dev/null) || true
 while IFS= read -r span; do
   [ -n "$span" ] || continue
   for target in $(printf '%s' "$span" | grep -oE 'of=/dev/[^[:space:];&|)`"'"'"']*' | sed 's/^of=//'); do

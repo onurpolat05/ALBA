@@ -143,3 +143,5 @@ deny|chmod -R a+rwx{,} /
 none|dd if=/dev/zero of=/dev/null bs=1M count=10
 none|echo done; git commit -m "drop schema validation"
 none|chmod -R 755 {src,lib}
+deny|dd if=a#b of=/dev/sda
+none|dd if=a#b of=/dev/null
