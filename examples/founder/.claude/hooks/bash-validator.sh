@@ -151,30 +151,38 @@ if matches "${CMD_START}mkfs(\.[[:alnum:]]+)?[[:space:]]"; then
   deny "mkfs would format a filesystem"
 fi
 
-# dd writing to a disk device. `dd if=...` alone is a harmless read, and so is
-# writing to /dev/null, /dev/stdout or a tty - only a disk destination matters.
-DISK='/dev/(sd|hd|nvme|disk|rdisk|mmcblk|vd|xvd)'
-if matches "${CMD_START}dd[[:space:]][^;&|]*of=${DISK}"; then
-  deny "dd writing directly to a disk device"
-fi
-
-# Any redirect into a raw disk device.
-if matches ">[[:space:]]*${DISK}"; then
-  deny "redirect into a raw disk device"
-fi
+# Writing to a device node, via dd or a redirect. Allowlist, not denylist: the
+# harmless targets are a short known set (null, zero, stdout/stderr, a tty, an
+# fd), while dangerous ones are open-ended (sd*, nvme*, mapper/*, md*, dm-*,
+# loop*, disk/by-id/* ...). Every target in the command is checked, so a
+# harmless `>/dev/null` elsewhere does not excuse a disk write.
+SAFE_DEV='^/dev/(null|zero|full|random|urandom|stdin|stdout|stderr|tty[^/]*|pts/[0-9]+|fd/[0-9]+)$'
+dev_targets() {
+  printf '%s' "$COMMAND" | grep -oE -- "$1" 2>/dev/null \
+    | grep -oE '/dev/[^[:space:];&|)`"'"'"']*$'
+}
+for target in $(dev_targets "${CMD_START}dd[[:space:]][^;&|]*of=/dev/[^[:space:];&|)\`\"']*"); do
+  printf '%s' "$target" | grep -qE "$SAFE_DEV" || deny "dd writing directly to a device node"
+done
+for target in $(dev_targets ">[[:space:]]*/dev/[^[:space:];&|)\`\"']*"); do
+  printf '%s' "$target" | grep -qE "$SAFE_DEV" || deny "redirect into a device node"
+done
 
 # Recursive world-writable permissions on the filesystem root, with the flags
 # in any order (`chmod -R 777 /`, `chmod 777 -R /`, `chmod --recursive a=rwx /`).
 # Checked one command segment at a time, so `chmod -R 755 x; chmod 777 y`
-# cannot assemble a match out of two different commands. A heredoc, not a pipe,
-# feeds the loop: deny() must exit this shell, not a subshell.
-SEGMENTS=$(printf '%s' "$COMMAND" | tr ';&|' '\n\n\n')
+# cannot assemble a match out of two different commands. Segments split on
+# every way a new command can start - separators, `(` and `$(`, backtick, `{`,
+# `!` - so a command nested in any of them is still at a segment start. A
+# heredoc, not a pipe, feeds the loop: deny() must exit this shell, not a
+# subshell.
+SEGMENTS=$(printf '%s' "$COMMAND" | tr ';&|(`{!' '\n\n\n\n\n\n\n')
 while IFS= read -r seg; do
   case "$seg" in *chmod*) ;; *) continue ;; esac
-  printf '%s' "$seg" | grep -qE "^[[:space:]]*(\(|\`)?${ASSIGN}(${WRAP_ONE})*chmod[[:space:]]" || continue
+  printf '%s' "$seg" | grep -qE "^[[:space:]]*${ASSIGN}(${WRAP_ONE})*chmod[[:space:]]" || continue
   printf '%s' "$seg" | grep -qE "[[:space:]](-[^[:space:]-]*R[^[:space:]]*|--recursive)([[:space:]]|$)" || continue
   printf '%s' "$seg" | grep -qE "[[:space:]](0?777|[ugoa]*[+=]rwx)([[:space:]]|$)" || continue
-  printf '%s' "$seg" | grep -qE "[[:space:]]/([[:space:]]|[)\`]|$)" || continue
+  printf '%s' "$seg" | grep -qE "[[:space:]]/([[:space:]]|[)}\`]|$)" || continue
   deny "recursive chmod 777 on the filesystem root"
 done <<EOF
 $SEGMENTS
@@ -229,15 +237,16 @@ if matches "${CMD_START}git[[:space:]]+filter-branch([[:space:]]|$)"; then
 fi
 
 # --- SQL -------------------------------------------------------------------
-# Only when a SQL client is part of the command: without that condition these
-# keywords match commit messages and grep needles ("drop schema validation",
-# "truncate long titles"). Client and statement are matched separately, not on
-# one line, so SQL fed through a heredoc on the next line is still caught.
-# Case-insensitive, because SQL keywords are. DROP TABLE is deliberately
-# absent: it is routine in migrations and blocking it would train people to
-# disable this hook.
-SQL_CLIENT='(^|[^[:alnum:]_-])(psql|mysql|mariadb|sqlite3|sqlcmd|duckdb|clickhouse-client|cockroach[[:space:]]+sql)([[:space:]]|$)'
-if matches_sql "$SQL_CLIENT"; then
+# Case-insensitive, because SQL keywords are, and not anchored to a command
+# position: the statement can sit in a psql argument, a heredoc, or a
+# `python3 -c` script. The one exception is a command that is itself just text
+# - a commit message, a grep needle, an echo - with no SQL client anywhere in
+# it; that is where "drop schema validation" and "truncate long titles" were
+# denied. DROP TABLE is deliberately absent: it is routine in migrations and
+# blocking it would train people to disable this hook.
+SQL_CLIENT='(^|[^[:alnum:]_-])(psql|pgcli|mysql|mysqlsh|mycli|mariadb|sqlite3|litecli|sqlcmd|usql|duckdb|clickhouse-client|cockroach[[:space:]]+sql|snowsql)([[:space:]]|$)'
+TEXT_ONLY='^[[:space:]]*(git[[:space:]]+(commit|tag|notes|log|show)|grep|egrep|rg|ag|ack|echo|printf)[[:space:]]'
+if matches_sql "$SQL_CLIENT" || ! matches "$TEXT_ONLY"; then
   if matches_sql "DROP[[:space:]]+(DATABASE|SCHEMA)[[:space:]]"; then
     deny "DROP DATABASE/SCHEMA"
   fi

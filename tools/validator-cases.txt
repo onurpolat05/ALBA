@@ -120,3 +120,17 @@ none|git push --force origin HEAD:feature/main-page
 deny|git push --force origin HEAD:main
 none|rm -rf node_modules
 none|rm -rf ./build/ ~/proj/cache
+
+# --- regressions caught by automated security review of the review fixes
+deny|dd if=/dev/zero of=/dev/mapper/vg-root
+deny|dd if=x.img of=/dev/md0
+deny|dd if=x.img of=/dev/dm-0
+deny|echo $(chmod -R 777 /)
+deny|{ chmod -R 777 /; }
+deny|! chmod -R 777 /
+deny|python3 -c "import psycopg; c.execute('DROP DATABASE prod')"
+none|make build > /dev/null 2>&1
+none|cmd 2>/dev/stderr; ls > /dev/tty
+deny|ls > /dev/null; cat img > /dev/disk2
+none|git commit -m "drop database migration helper"
+none|echo "TRUNCATE users is in the runbook"
